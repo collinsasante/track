@@ -586,6 +586,22 @@
       function displayOrderDetails(record, orderId) {
         const fields = record.fields;
 
+        // Build review URL
+        const baseUrl = window.location.href.split("/").slice(0, -1).join("/");
+        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(fields["Customer Name"] || "")}&design=${encodeURIComponent(fields["Design URL"])}`;
+
+        // Check if user came from a direct link (URL contains order ID)
+        const urlPath = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDirectLink = urlPath.match(/\/ORD-(\d+)/i) || urlParams.get('order');
+
+        // If it's a direct link, redirect immediately to Design Review
+        if (isDirectLink) {
+          window.location.href = reviewUrl;
+          return;
+        }
+
+        // Otherwise, show the order details (manual search)
         const detailsHtml = `
                 <div class="detail-row">
                     <span class="detail-label">Order ID:</span>
@@ -606,11 +622,6 @@
             `;
 
         document.getElementById("orderDetails").innerHTML = detailsHtml;
-
-        // Build review URL
-        const baseUrl = window.location.href.split("/").slice(0, -1).join("/");
-        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(fields["Customer Name"] || "")}&design=${encodeURIComponent(fields["Design URL"])}`;
-
         document.getElementById("viewDesignLink").href = reviewUrl;
 
         hideAll();
