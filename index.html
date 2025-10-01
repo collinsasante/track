@@ -460,6 +460,32 @@
       const successBox = document.getElementById("successBox");
       const trackBtn = document.getElementById("trackBtn");
 
+      // Check if URL has an order ID parameter on page load
+      window.addEventListener('DOMContentLoaded', function() {
+        const urlPath = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Check for /ORD-XXXXX in URL path
+        const pathMatch = urlPath.match(/\/ORD-(\d+)/i);
+        if (pathMatch) {
+          const orderId = pathMatch[1];
+          document.getElementById("orderId").value = `ORD-${orderId}`;
+          // Auto-submit the form
+          setTimeout(() => {
+            form.dispatchEvent(new Event('submit'));
+          }, 100);
+        }
+        // Check for ?order=ORD-XXXXX in query params
+        else if (urlParams.get('order')) {
+          const orderId = urlParams.get('order');
+          document.getElementById("orderId").value = orderId;
+          // Auto-submit the form
+          setTimeout(() => {
+            form.dispatchEvent(new Event('submit'));
+          }, 100);
+        }
+      });
+
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
 
