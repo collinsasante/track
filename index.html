@@ -480,8 +480,8 @@
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
 
-        // Check for /ORD-XXXXX in URL path
-        let pathMatch = urlPath.match(/\/ORD-(\d+)/i);
+        // Check for /ORD-XXXXX in URL path (alphanumeric)
+        let pathMatch = urlPath.match(/\/ORD-([A-Z0-9]+)/i);
         if (pathMatch) {
           const orderId = pathMatch[1];
           document.getElementById("orderId").value = `ORD-${orderId}`;
@@ -490,8 +490,8 @@
             form.dispatchEvent(new Event('submit'));
           }, 100);
         }
-        // Check for /XXXXX (just numbers, no ORD- prefix)
-        else if ((pathMatch = urlPath.match(/\/(\d+)$/))) {
+        // Check for /XXXXX (alphanumeric, no ORD- prefix)
+        else if ((pathMatch = urlPath.match(/\/([A-Z0-9]+)$/i))) {
           const orderId = pathMatch[1];
           document.getElementById("orderId").value = `ORD-${orderId}`;
           // Auto-submit the form
@@ -647,7 +647,7 @@
         // Check if user came from a direct link (URL contains order ID)
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
-        const isDirectLink = urlPath.match(/\/ORD-(\d+)/i) || urlParams.get('order');
+        const isDirectLink = urlPath.match(/\/ORD-([A-Z0-9]+)/i) || urlPath.match(/\/([A-Z0-9]+)$/i) || urlParams.get('order');
 
         // If it's a direct link, redirect immediately to Design Review
         if (isDirectLink) {
