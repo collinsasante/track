@@ -389,13 +389,29 @@
 
     <!-- Configuration from Cloudflare Environment Variables -->
     <script>
-      window.CONFIG = window.CONFIG || {
+      window.CONFIG = {
         airtable: {
-          baseId: window.AIRTABLE_BASE_ID || "",
+          baseId: "",
           tableId: "Design Feedback",
-          apiKey: window.AIRTABLE_API_KEY || ""
+          apiKey: ""
         }
       };
+
+      // Load configuration from API
+      async function loadConfig() {
+        try {
+          const response = await fetch('/api/config');
+          const config = await response.json();
+          window.CONFIG.airtable.baseId = config.airtable.baseId;
+          window.CONFIG.airtable.apiKey = config.airtable.apiKey;
+          console.log("Config loaded successfully");
+        } catch (error) {
+          console.error("Failed to load config:", error);
+        }
+      }
+
+      // Load config on page load
+      loadConfig();
     </script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -443,11 +443,11 @@
 
     <!-- Configuration from Cloudflare Environment Variables -->
     <script>
-      window.CONFIG = window.CONFIG || {
+      window.CONFIG = {
         airtable: {
-          baseId: window.AIRTABLE_BASE_ID || "",
+          baseId: "",
           tableId: "Submissions",
-          apiKey: window.AIRTABLE_API_KEY || "",
+          apiKey: "",
         },
       };
     </script>
@@ -460,8 +460,23 @@
       const successBox = document.getElementById("successBox");
       const trackBtn = document.getElementById("trackBtn");
 
+      // Load configuration from API
+      async function loadConfig() {
+        try {
+          const response = await fetch('/api/config');
+          const config = await response.json();
+          window.CONFIG.airtable.baseId = config.airtable.baseId;
+          window.CONFIG.airtable.apiKey = config.airtable.apiKey;
+          console.log("Config loaded successfully");
+        } catch (error) {
+          console.error("Failed to load config:", error);
+        }
+      }
+
       // Check if URL has an order ID parameter on page load
-      window.addEventListener('DOMContentLoaded', function() {
+      window.addEventListener('DOMContentLoaded', async function() {
+        // Load config first
+        await loadConfig();
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
 
