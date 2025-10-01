@@ -601,19 +601,26 @@
             if (response.records && response.records.length > 0) {
               record = response.records[0];
               console.log("Found record:", record);
+              console.log("Record fields:", record.fields);
+              console.log("Available field names:", Object.keys(record.fields));
             } else {
               console.log("No records found matching formula");
             }
           }
 
-          if (record && record.fields && record.fields["Design URL"]) {
-            console.log("Design URL found:", record.fields["Design URL"]);
-            displayOrderDetails(record, orderId);
-          } else if (record && !record.fields["Design URL"]) {
-            showError(
-              "Design not ready yet. Please check back later or contact us."
-            );
+          if (record && record.fields) {
+            console.log("Checking for Design URL field...");
+            if (record.fields["Design URL"]) {
+              console.log("Design URL found:", record.fields["Design URL"]);
+              displayOrderDetails(record, orderId);
+            } else {
+              console.log("Design URL field not found. Available fields:", Object.keys(record.fields));
+              showError(
+                "Design not ready yet. Please check back later or contact us."
+              );
+            }
           } else {
+            console.log("No record found");
             showError(
               "Order not found. Please check your Order ID and try again."
             );
