@@ -1,2 +1,3 @@
 # Redirect order URLs to index with the order ID preserved
 /ORD-:id   /index.html   200
+/:id       /index.html   200

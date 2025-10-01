@@ -466,8 +466,17 @@
         const urlParams = new URLSearchParams(window.location.search);
 
         // Check for /ORD-XXXXX in URL path
-        const pathMatch = urlPath.match(/\/ORD-(\d+)/i);
+        let pathMatch = urlPath.match(/\/ORD-(\d+)/i);
         if (pathMatch) {
+          const orderId = pathMatch[1];
+          document.getElementById("orderId").value = `ORD-${orderId}`;
+          // Auto-submit the form
+          setTimeout(() => {
+            form.dispatchEvent(new Event('submit'));
+          }, 100);
+        }
+        // Check for /XXXXX (just numbers, no ORD- prefix)
+        else if ((pathMatch = urlPath.match(/\/(\d+)$/))) {
           const orderId = pathMatch[1];
           document.getElementById("orderId").value = `ORD-${orderId}`;
           // Auto-submit the form
@@ -477,7 +486,11 @@
         }
         // Check for ?order=ORD-XXXXX in query params
         else if (urlParams.get('order')) {
-          const orderId = urlParams.get('order');
+          let orderId = urlParams.get('order');
+          // Add ORD- prefix if not present
+          if (!orderId.toUpperCase().startsWith('ORD-')) {
+            orderId = `ORD-${orderId}`;
+          }
           document.getElementById("orderId").value = orderId;
           // Auto-submit the form
           setTimeout(() => {
