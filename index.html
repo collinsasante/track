@@ -555,25 +555,25 @@
             }
           }
 
-          // If not found or it's a number, search by formula
+          // If not found, search by Order Number field using filterByFormula
           if (!record) {
-            // Try searching for orders (assuming there's an Order Number field or search all)
+            const orderIdWithPrefix = `ORD-${orderId}`;
+            const formula = `OR({Order Number}='${orderIdWithPrefix}', {Order Number}='${orderId}')`;
+
             const response = await $.ajax({
-              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}?maxRecords=1000`,
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}`,
               method: "GET",
               headers: {
                 Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
               },
+              data: {
+                filterByFormula: formula,
+                maxRecords: 1
+              }
             });
 
-            // Find matching order by index (if numeric) or record ID
-            const orderNum = parseInt(orderId);
-            if (!isNaN(orderNum) && orderNum > 0) {
-              // Find by index (order number)
-              record = response.records[orderNum - 1];
-            } else {
-              // Find by record ID in the list
-              record = response.records.find((r) => r.id === orderId);
+            if (response.records && response.records.length > 0) {
+              record = response.records[0];
             }
           }
 
@@ -626,7 +626,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Product:</span>
-                    <span class="detail-value">${fields["Product Name"] || "N/A"}</span>
+                    <span class="detail-value">${fields["Name"] || fields["Product Name"] || "N/A"}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Submitted:</span>
