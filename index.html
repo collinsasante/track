@@ -446,7 +446,7 @@
       window.CONFIG = {
         airtable: {
           baseId: "",
-          tableId: "Submissions",
+          tableId: "Design Projects",
           apiKey: "",
         },
       };
@@ -609,27 +609,39 @@
           }
 
           if (record && record.fields) {
-            console.log("Checking for Design Drafts field...");
-            // Check for Design Drafts field (it's an array of attachments)
-            const designDrafts = record.fields["Design Drafts"];
-            console.log("Design Drafts field content:", designDrafts);
-            console.log("Design Drafts type:", typeof designDrafts);
-            console.log("Design Drafts is array?:", Array.isArray(designDrafts));
+            console.log("Checking for design attachment fields...");
+            console.log("Available fields:", Object.keys(record.fields));
 
-            if (designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
-              // Get the URL of the first design draft
-              console.log("First draft item:", designDrafts[0]);
-              const designUrl = designDrafts[0].url;
-              console.log("Design URL found:", designUrl);
+            // Try to find the design in order of preference
+            let designUrl = null;
+
+            // Check Design Draft 1 (Attachment field)
+            if (record.fields["Design Draft 1"] && Array.isArray(record.fields["Design Draft 1"]) && record.fields["Design Draft 1"].length > 0) {
+              designUrl = record.fields["Design Draft 1"][0].url;
+              console.log("Found design in 'Design Draft 1':", designUrl);
+            }
+            // Check Revision 3 (latest)
+            else if (record.fields["Revision 3"] && Array.isArray(record.fields["Revision 3"]) && record.fields["Revision 3"].length > 0) {
+              designUrl = record.fields["Revision 3"][0].url;
+              console.log("Found design in 'Revision 3':", designUrl);
+            }
+            // Check Revision 2
+            else if (record.fields["Revision 2"] && Array.isArray(record.fields["Revision 2"]) && record.fields["Revision 2"].length > 0) {
+              designUrl = record.fields["Revision 2"][0].url;
+              console.log("Found design in 'Revision 2':", designUrl);
+            }
+            // Check Revision 1
+            else if (record.fields["Revision 1"] && Array.isArray(record.fields["Revision 1"]) && record.fields["Revision 1"].length > 0) {
+              designUrl = record.fields["Revision 1"][0].url;
+              console.log("Found design in 'Revision 1':", designUrl);
+            }
+
+            if (designUrl) {
+              console.log("Final design URL:", designUrl);
               displayOrderDetails(record, orderId, designUrl);
-            } else if (typeof designDrafts === 'string') {
-              // If it's a plain text URL
-              console.log("Design Drafts is a string URL:", designDrafts);
-              displayOrderDetails(record, orderId, designDrafts);
             } else {
-              console.log("Design Drafts field not found or empty.");
-              console.log("Design Drafts value:", designDrafts);
-              console.log("Available fields:", Object.keys(record.fields));
+              console.log("No design found in any attachment fields.");
+              console.log("Checked fields: Design Draft 1, Revision 1, Revision 2, Revision 3");
               showError(
                 "Design not ready yet. Please check back later or contact us."
               );
@@ -653,7 +665,9 @@
 
         // Build review URL
         const baseUrl = window.location.href.split("/").slice(0, -1).join("/");
-        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(fields["Customer Name"] || "")}&design=${encodeURIComponent(designUrl)}`;
+        // Use lookup fields from Project Information
+        const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
+        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
         // Check if user came from a direct link (URL contains order ID)
         const urlPath = window.location.pathname;
@@ -667,6 +681,9 @@
         }
 
         // Otherwise, show the order details (manual search)
+        const productName = fields["Product Name (from Project Information)"] || fields["Name"] || fields["Product Name"] || "N/A";
+        const createdDate = fields["Created on"] || fields["Submission Date"] || "";
+
         const detailsHtml = `
                 <div class="detail-row">
                     <span class="detail-label">Order ID:</span>
@@ -674,15 +691,15 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Customer:</span>
-                    <span class="detail-value">${fields["Customer Name"] || "N/A"}</span>
+                    <span class="detail-value">${customerName || "N/A"}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Product:</span>
-                    <span class="detail-value">${fields["Name"] || fields["Product Name"] || "N/A"}</span>
+                    <span class="detail-value">${productName}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Submitted:</span>
-                    <span class="detail-value">${fields["Submission Date"] ? new Date(fields["Submission Date"]).toLocaleDateString() : "N/A"}</span>
+                    <span class="detail-label">Created:</span>
+                    <span class="detail-value">${createdDate ? new Date(createdDate).toLocaleDateString() : "N/A"}</span>
                 </div>
             `;
 
