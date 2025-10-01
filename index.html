@@ -612,13 +612,24 @@
             console.log("Checking for Design Drafts field...");
             // Check for Design Drafts field (it's an array of attachments)
             const designDrafts = record.fields["Design Drafts"];
-            if (designDrafts && designDrafts.length > 0) {
+            console.log("Design Drafts field content:", designDrafts);
+            console.log("Design Drafts type:", typeof designDrafts);
+            console.log("Design Drafts is array?:", Array.isArray(designDrafts));
+
+            if (designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
               // Get the URL of the first design draft
+              console.log("First draft item:", designDrafts[0]);
               const designUrl = designDrafts[0].url;
               console.log("Design URL found:", designUrl);
               displayOrderDetails(record, orderId, designUrl);
+            } else if (typeof designDrafts === 'string') {
+              // If it's a plain text URL
+              console.log("Design Drafts is a string URL:", designDrafts);
+              displayOrderDetails(record, orderId, designDrafts);
             } else {
-              console.log("Design Drafts field not found or empty. Available fields:", Object.keys(record.fields));
+              console.log("Design Drafts field not found or empty.");
+              console.log("Design Drafts value:", designDrafts);
+              console.log("Available fields:", Object.keys(record.fields));
               showError(
                 "Design not ready yet. Please check back later or contact us."
               );
