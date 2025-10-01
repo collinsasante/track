@@ -609,12 +609,16 @@
           }
 
           if (record && record.fields) {
-            console.log("Checking for Design URL field...");
-            if (record.fields["Design URL"]) {
-              console.log("Design URL found:", record.fields["Design URL"]);
-              displayOrderDetails(record, orderId);
+            console.log("Checking for Design Drafts field...");
+            // Check for Design Drafts field (it's an array of attachments)
+            const designDrafts = record.fields["Design Drafts"];
+            if (designDrafts && designDrafts.length > 0) {
+              // Get the URL of the first design draft
+              const designUrl = designDrafts[0].url;
+              console.log("Design URL found:", designUrl);
+              displayOrderDetails(record, orderId, designUrl);
             } else {
-              console.log("Design URL field not found. Available fields:", Object.keys(record.fields));
+              console.log("Design Drafts field not found or empty. Available fields:", Object.keys(record.fields));
               showError(
                 "Design not ready yet. Please check back later or contact us."
               );
@@ -633,12 +637,12 @@
         }
       }
 
-      function displayOrderDetails(record, orderId) {
+      function displayOrderDetails(record, orderId, designUrl) {
         const fields = record.fields;
 
         // Build review URL
         const baseUrl = window.location.href.split("/").slice(0, -1).join("/");
-        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(fields["Customer Name"] || "")}&design=${encodeURIComponent(fields["Design URL"])}`;
+        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(fields["Customer Name"] || "")}&design=${encodeURIComponent(designUrl)}`;
 
         // Check if user came from a direct link (URL contains order ID)
         const urlPath = window.location.pathname;
