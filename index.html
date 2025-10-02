@@ -611,60 +611,66 @@
           if (record && record.fields) {
             console.log("Record found! Available fields:", Object.keys(record.fields));
 
-            // Check Design Drafts field - it's a linked record to Design Drafts table
-            const designDrafts = record.fields["Design Drafts"];
-            console.log("Design Drafts field:", designDrafts);
+            // Check Discovery Call Records field - it contains the Project File Link
+            const discoveryCallRecords = record.fields["Discovery Call Records"];
+            console.log("Discovery Call Records field:", discoveryCallRecords);
 
             let designUrl = "https://via.placeholder.com/800x600.png?text=No+Design+Available";
 
-            // If Design Drafts is a linked record ID, fetch it to get Cloudinary URL
-            if (designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
-              const designDraftId = designDrafts[0];
-              console.log("Design Draft ID:", designDraftId);
+            // Fetch Discovery Call Records to get Project File Link (Google Drive URL)
+            if (discoveryCallRecords && Array.isArray(discoveryCallRecords) && discoveryCallRecords.length > 0) {
+              const discoveryCallId = discoveryCallRecords[0];
+              console.log("Discovery Call Record ID:", discoveryCallId);
 
-              // Fetch the Design Drafts record (contains Long Text field with Cloudinary URL)
               try {
-                const designDraftResponse = await $.ajax({
-                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts/${designDraftId}`,
+                const discoveryCallResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Discovery%20Call%20Records/${discoveryCallId}`,
                   method: "GET",
                   headers: {
                     Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
                   },
                 });
 
-                console.log("Design Draft record:", designDraftResponse);
-                console.log("Design Draft fields:", Object.keys(designDraftResponse.fields || {}));
+                console.log("Discovery Call record:", discoveryCallResponse);
+                console.log("Discovery Call fields:", Object.keys(discoveryCallResponse.fields || {}));
 
-                // Look for URL in Long Text fields (Cloudinary URLs)
-                if (designDraftResponse.fields) {
-                  // Try common field names first - PRIORITIZE Project File Link
-                  const urlFields = ['Project File Link', 'Design URL', 'URL', 'Draft URL', 'Image URL', 'Design', 'Cloudinary URL', 'Design Draft'];
+                // Look for Project File Link (Google Drive URL)
+                if (discoveryCallResponse.fields) {
+                  // Check all Project File Link variants
+                  const urlFields = [
+                    'Project File Link',
+                    'Project File Link (Rev 1.0)',
+                    'Project File Link (Rev 1.1)',
+                    'Project File Link (Rev 1.2)',
+                    'Project File Link (Rev 1.3)',
+                    'Design URL',
+                    'URL'
+                  ];
 
                   for (const fieldName of urlFields) {
-                    if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
-                      designUrl = designDraftResponse.fields[fieldName];
+                    if (discoveryCallResponse.fields[fieldName] && typeof discoveryCallResponse.fields[fieldName] === 'string') {
+                      designUrl = discoveryCallResponse.fields[fieldName];
                       console.log(`Found design URL in '${fieldName}':`, designUrl);
                       break;
                     }
                   }
 
-                  // If not found, get first text field that looks like a Cloudinary URL (not tracking URL)
+                  // If not found, get first text field that looks like a URL
                   if (designUrl.includes('placeholder')) {
-                    const urlField = Object.keys(designDraftResponse.fields).find(key =>
-                      typeof designDraftResponse.fields[key] === 'string' &&
-                      designDraftResponse.fields[key].includes('cloudinary') &&
-                      !designDraftResponse.fields[key].includes('track.packglamour')
+                    const urlField = Object.keys(discoveryCallResponse.fields).find(key =>
+                      typeof discoveryCallResponse.fields[key] === 'string' &&
+                      (discoveryCallResponse.fields[key].startsWith('http') && !discoveryCallResponse.fields[key].includes('track.packglamour'))
                     );
                     if (urlField) {
-                      designUrl = designDraftResponse.fields[urlField];
-                      console.log(`Found Cloudinary design URL in '${urlField}':`, designUrl);
+                      designUrl = discoveryCallResponse.fields[urlField];
+                      console.log(`Found design URL in '${urlField}':`, designUrl);
                     } else {
-                      console.log("No Cloudinary URL found in Design Drafts fields:", Object.keys(designDraftResponse.fields));
+                      console.log("No design URL found in Discovery Call Records fields:", Object.keys(discoveryCallResponse.fields));
                     }
                   }
                 }
               } catch (err) {
-                console.error("Error fetching design draft:", err);
+                console.error("Error fetching discovery call record:", err);
                 console.error("Error details:", err.responseJSON || err);
               }
             }
