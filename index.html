@@ -665,13 +665,45 @@
                       designUrl = discoveryCallResponse.fields[urlField];
                       console.log(`Found design URL in '${urlField}':`, designUrl);
                     } else {
-                      console.log("No design URL found in Discovery Call Records fields:", Object.keys(discoveryCallResponse.fields));
+                      console.log("No design URL found in Discovery Call Records");
                     }
                   }
                 }
               } catch (err) {
                 console.error("Error fetching discovery call record:", err);
-                console.error("Error details:", err.responseJSON || err);
+              }
+            }
+
+            // FALLBACK: If no Discovery Call Records or no URL found, try Design Drafts
+            const designDrafts = record.fields["Design Drafts"];
+            if (designUrl.includes('placeholder') && designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
+              const designDraftId = designDrafts[0];
+              console.log("Trying Design Drafts as fallback, ID:", designDraftId);
+
+              try {
+                const designDraftResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts/${designDraftId}`,
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                  },
+                });
+
+                console.log("Design Draft record:", designDraftResponse);
+
+                if (designDraftResponse.fields) {
+                  const urlFields = ['Project File Link', 'Design URL', 'URL'];
+
+                  for (const fieldName of urlFields) {
+                    if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
+                      designUrl = designDraftResponse.fields[fieldName];
+                      console.log(`Found design URL in Design Drafts '${fieldName}':`, designUrl);
+                      break;
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error("Error fetching design draft:", err);
               }
             }
 
