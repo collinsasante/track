@@ -707,6 +707,16 @@
               }
             }
 
+            // Convert Google Drive sharing link to direct image link
+            if (designUrl.includes('drive.google.com')) {
+              const fileIdMatch = designUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+              if (fileIdMatch) {
+                const fileId = fileIdMatch[1];
+                designUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                console.log("Converted Google Drive URL to direct link:", designUrl);
+              }
+            }
+
             displayOrderDetails(record, orderId, designUrl);
           } else {
             console.log("No record found");
