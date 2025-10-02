@@ -637,8 +637,8 @@
 
                 // Look for URL in Long Text fields (Cloudinary URLs)
                 if (designDraftResponse.fields) {
-                  // Try common field names first
-                  const urlFields = ['Design URL', 'URL', 'Draft URL', 'Image URL', 'Design', 'Cloudinary URL', 'Design Draft'];
+                  // Try common field names first - PRIORITIZE Project File Link
+                  const urlFields = ['Project File Link', 'Design URL', 'URL', 'Draft URL', 'Image URL', 'Design', 'Cloudinary URL', 'Design Draft'];
 
                   for (const fieldName of urlFields) {
                     if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
