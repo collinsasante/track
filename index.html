@@ -611,39 +611,58 @@
           if (record && record.fields) {
             console.log("Record found! Available fields:", Object.keys(record.fields));
 
-            // Check Design Drafts field - it's a linked record to Design Projects
+            // Check Design Drafts field - it's a linked record to Design Drafts table
             const designDrafts = record.fields["Design Drafts"];
             console.log("Design Drafts field:", designDrafts);
 
             let designUrl = "https://via.placeholder.com/800x600.png?text=No+Design+Available";
 
-            // If Design Drafts is a linked record ID, we need to fetch that record
+            // If Design Drafts is a linked record ID, fetch it to get Cloudinary URL
             if (designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
-              const designProjectId = designDrafts[0];
-              console.log("Design Project ID:", designProjectId);
+              const designDraftId = designDrafts[0];
+              console.log("Design Draft ID:", designDraftId);
 
-              // Fetch the Design Project record to get the actual attachment
+              // Fetch the Design Drafts record (contains Long Text field with Cloudinary URL)
               try {
-                const designProjectResponse = await $.ajax({
-                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Projects/${designProjectId}`,
+                const designDraftResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts/${designDraftId}`,
                   method: "GET",
                   headers: {
                     Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
                   },
                 });
 
-                console.log("Design Project record:", designProjectResponse);
+                console.log("Design Draft record:", designDraftResponse);
+                console.log("Design Draft fields:", Object.keys(designDraftResponse.fields || {}));
 
-                // Check for Design Draft 1 attachment
-                if (designProjectResponse.fields && designProjectResponse.fields["Design Draft 1"]) {
-                  const drafts = designProjectResponse.fields["Design Draft 1"];
-                  if (Array.isArray(drafts) && drafts.length > 0) {
-                    designUrl = drafts[0].url;
-                    console.log("Found design URL:", designUrl);
+                // Look for URL in Long Text fields (Cloudinary URLs)
+                if (designDraftResponse.fields) {
+                  // Try common field names first
+                  const urlFields = ['Design URL', 'URL', 'Draft URL', 'Image URL', 'Design', 'Cloudinary URL', 'Design Draft'];
+
+                  for (const fieldName of urlFields) {
+                    if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
+                      designUrl = designDraftResponse.fields[fieldName];
+                      console.log(`Found design URL in '${fieldName}':`, designUrl);
+                      break;
+                    }
+                  }
+
+                  // If not found, get first text field that looks like a URL
+                  if (designUrl.includes('placeholder')) {
+                    const urlField = Object.keys(designDraftResponse.fields).find(key =>
+                      typeof designDraftResponse.fields[key] === 'string' &&
+                      (designDraftResponse.fields[key].startsWith('http') || designDraftResponse.fields[key].includes('cloudinary'))
+                    );
+                    if (urlField) {
+                      designUrl = designDraftResponse.fields[urlField];
+                      console.log(`Found design URL in '${urlField}':`, designUrl);
+                    }
                   }
                 }
               } catch (err) {
-                console.error("Error fetching design project:", err);
+                console.error("Error fetching design draft:", err);
+                console.error("Error details:", err.responseJSON || err);
               }
             }
 
