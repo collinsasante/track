@@ -479,7 +479,7 @@
         await loadConfig();
 
         // Don't auto-search if we're on the Design Review page
-        if (window.location.pathname.includes('Design Review')) {
+        if (window.location.pathname.includes('design-review')) {
           console.log("On Design Review page, skipping auto-search");
           return;
         }
@@ -746,7 +746,7 @@
         const baseUrl = window.location.origin;
         // Use lookup fields from Project Information
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
-        const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
+        const reviewUrl = `${baseUrl}/design-review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
         console.log("Review URL built:", reviewUrl);
 
