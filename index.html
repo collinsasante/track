@@ -648,15 +648,18 @@
                     }
                   }
 
-                  // If not found, get first text field that looks like a URL
+                  // If not found, get first text field that looks like a Cloudinary URL (not tracking URL)
                   if (designUrl.includes('placeholder')) {
                     const urlField = Object.keys(designDraftResponse.fields).find(key =>
                       typeof designDraftResponse.fields[key] === 'string' &&
-                      (designDraftResponse.fields[key].startsWith('http') || designDraftResponse.fields[key].includes('cloudinary'))
+                      designDraftResponse.fields[key].includes('cloudinary') &&
+                      !designDraftResponse.fields[key].includes('track.packglamour')
                     );
                     if (urlField) {
                       designUrl = designDraftResponse.fields[urlField];
-                      console.log(`Found design URL in '${urlField}':`, designUrl);
+                      console.log(`Found Cloudinary design URL in '${urlField}':`, designUrl);
+                    } else {
+                      console.log("No Cloudinary URL found in Design Drafts fields:", Object.keys(designDraftResponse.fields));
                     }
                   }
                 }
