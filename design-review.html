@@ -672,9 +672,20 @@
           console.error('Error saving to Airtable:', error);
           console.error('Error details:', error.responseJSON || error.responseText);
 
+          // Log the actual error message from Airtable
+          if (error.responseJSON && error.responseJSON.error) {
+            console.error('Airtable error:', error.responseJSON.error);
+            console.error('Error type:', error.responseJSON.error.type);
+            console.error('Error message:', error.responseJSON.error.message);
+          }
+
           let errorMsg = 'Error saving feedback. ';
           if (error.status === 422) {
-            errorMsg += 'The "Design Feedback" table may not exist in Airtable yet. Please create it first.';
+            if (error.responseJSON && error.responseJSON.error) {
+              errorMsg += error.responseJSON.error.message;
+            } else {
+              errorMsg += 'The "Design Feedback" table may not exist or fields are incorrect. Check console for details.';
+            }
           } else {
             errorMsg += 'Please try again or contact support.';
           }
