@@ -226,6 +226,37 @@
         }
       }
 
+      /* Full screen loading overlay for direct links */
+      .fullscreen-loading {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f5f5f5;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      .fullscreen-loading.show {
+        display: flex;
+      }
+
+      .fullscreen-loading .spinner {
+        width: 60px;
+        height: 60px;
+        border-width: 5px;
+      }
+
+      .fullscreen-loading p {
+        color: #666;
+        font-size: 18px;
+        margin-top: 20px;
+      }
+
       .error-box {
         display: none;
         background: #fff5f5;
@@ -374,6 +405,12 @@
     </style>
   </head>
   <body>
+    <!-- Full-screen loading overlay for direct links -->
+    <div class="fullscreen-loading" id="fullscreenLoading">
+      <div class="spinner"></div>
+      <p>Loading your design...</p>
+    </div>
+
     <div class="container">
       <div class="logo">
         <img src="assets/images/logo.png" alt="Packaging Glamour" />
@@ -491,9 +528,15 @@
         let pathMatch = urlPath.match(/\/ORD-([A-Z0-9]+)/i);
         if (pathMatch) {
           const orderId = pathMatch[1];
-          // Hide page content and show only loading for direct links
-          document.querySelector('.container').style.display = 'none';
-          document.getElementById("loading").classList.add("show");
+          console.log("Direct link detected for order:", orderId);
+
+          // Show full-screen loading overlay
+          const fullscreenLoading = document.getElementById("fullscreenLoading");
+          if (fullscreenLoading) {
+            fullscreenLoading.classList.add("show");
+            console.log("Showing fullscreen loading");
+          }
+
           document.getElementById("orderId").value = `ORD-${orderId}`;
           // Auto-submit the form
           setTimeout(() => {
@@ -503,9 +546,15 @@
         // Check for /XXXXX (alphanumeric, no ORD- prefix)
         else if ((pathMatch = urlPath.match(/\/([A-Z0-9]+)$/i))) {
           const orderId = pathMatch[1];
-          // Hide page content and show only loading for direct links
-          document.querySelector('.container').style.display = 'none';
-          document.getElementById("loading").classList.add("show");
+          console.log("Direct link detected for order:", orderId);
+
+          // Show full-screen loading overlay
+          const fullscreenLoading = document.getElementById("fullscreenLoading");
+          if (fullscreenLoading) {
+            fullscreenLoading.classList.add("show");
+            console.log("Showing fullscreen loading");
+          }
+
           document.getElementById("orderId").value = `ORD-${orderId}`;
           // Auto-submit the form
           setTimeout(() => {
