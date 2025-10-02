@@ -491,6 +491,9 @@
         let pathMatch = urlPath.match(/\/ORD-([A-Z0-9]+)/i);
         if (pathMatch) {
           const orderId = pathMatch[1];
+          // Hide page content and show only loading for direct links
+          document.querySelector('.container').style.display = 'none';
+          document.getElementById("loading").classList.add("show");
           document.getElementById("orderId").value = `ORD-${orderId}`;
           // Auto-submit the form
           setTimeout(() => {
@@ -500,6 +503,9 @@
         // Check for /XXXXX (alphanumeric, no ORD- prefix)
         else if ((pathMatch = urlPath.match(/\/([A-Z0-9]+)$/i))) {
           const orderId = pathMatch[1];
+          // Hide page content and show only loading for direct links
+          document.querySelector('.container').style.display = 'none';
+          document.getElementById("loading").classList.add("show");
           document.getElementById("orderId").value = `ORD-${orderId}`;
           // Auto-submit the form
           setTimeout(() => {
