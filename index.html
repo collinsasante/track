@@ -639,16 +639,25 @@
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
         const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
+        console.log("Review URL built:", reviewUrl);
+
         // Check if user came from a direct link (URL contains order ID)
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
+        console.log("URL Path:", urlPath);
+        console.log("URL Params:", urlParams.toString());
+
         const isDirectLink = urlPath.match(/\/ORD-([A-Z0-9]+)/i) || urlPath.match(/\/([A-Z0-9]+)$/i) || urlParams.get('order');
+        console.log("Is direct link?", isDirectLink);
 
         // If it's a direct link, redirect immediately to Design Review
         if (isDirectLink) {
+          console.log("Redirecting to:", reviewUrl);
           window.location.href = reviewUrl;
           return;
         }
+
+        console.log("Not redirecting - showing order details instead");
 
         // Otherwise, show the order details (manual search)
         const productName = fields["Product Name (from Project Information)"] || fields["Name"] || fields["Product Name"] || "N/A";
