@@ -532,11 +532,18 @@
         console.log("Search params:", window.location.search);
         console.log("Hash:", hash);
 
-        // Check for #ORD-XXXXX in hash (client-side routing - most reliable)
-        const hashMatch = hash.match(/#ORD-([A-Z0-9]+)/i);
-        if (hashMatch) {
-          const orderId = hashMatch[1];
-          console.log("Direct link detected with hash:", orderId);
+        // Check for #ORD-XXXXX or #XXXXX in hash (client-side routing - most reliable)
+        if (hash) {
+          let orderId = hash.substring(1); // Remove the # character
+          console.log("Hash detected:", orderId);
+
+          // If it already starts with ORD-, use as-is
+          // Otherwise, add ORD- prefix
+          if (!orderId.toUpperCase().startsWith('ORD-')) {
+            orderId = `ORD-${orderId}`;
+          }
+
+          console.log("Direct link detected with hash, normalized order ID:", orderId);
           isDirectLinkAccess = true;
 
           // Show full-screen loading overlay
@@ -546,7 +553,7 @@
             console.log("Showing fullscreen loading");
           }
 
-          document.getElementById("orderId").value = `ORD-${orderId}`;
+          document.getElementById("orderId").value = orderId;
           // Auto-submit the form
           setTimeout(() => {
             form.dispatchEvent(new Event('submit'));
