@@ -340,18 +340,6 @@
           <div class="add-comment-form" id="commentForm" style="display: none">
             <form id="feedbackForm">
               <div class="form-group">
-                <label for="userName"
-                  >Your Name
-                  <span style="color: var(--secondary-color)">*</span></label
-                >
-                <input
-                  type="text"
-                  id="userName"
-                  required
-                  placeholder="Enter your name"
-                />
-              </div>
-              <div class="form-group">
                 <label for="userComment"
                   >Your Feedback
                   <span style="color: var(--secondary-color)">*</span></label
@@ -360,6 +348,7 @@
                   id="userComment"
                   required
                   placeholder="Describe what you'd like changed or improved..."
+                  rows="4"
                 ></textarea>
               </div>
               <button type="submit" class="btn-primary">
@@ -465,16 +454,48 @@
           const y = ((e.clientY - rect.top) / rect.height) * 100;
 
           tempMarkerPosition = { x, y };
+
+          // Show preview marker immediately
+          showPreviewMarker(x, y);
+
           commentForm.style.display = "block";
           commentForm.scrollIntoView({ behavior: "smooth" });
         }
       });
 
+      // Show preview marker while typing
+      function showPreviewMarker(x, y) {
+        // Remove any existing preview marker
+        const existingPreview = document.getElementById('preview-marker');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+
+        // Create preview marker
+        const marker = document.createElement("div");
+        marker.id = 'preview-marker';
+        marker.className = "comment-marker";
+        marker.style.left = x + "%";
+        marker.style.top = y + "%";
+        marker.style.backgroundColor = "#f7933a";
+        marker.style.opacity = "0.7";
+        marker.innerHTML = '<i class="fas fa-pen" style="font-size: 10px;"></i>';
+
+        imageContainer.appendChild(marker);
+      }
+
+      // Remove preview marker when form is hidden
+      function removePreviewMarker() {
+        const existingPreview = document.getElementById('preview-marker');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+      }
+
       // Submit feedback
       feedbackForm.addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const userName = document.getElementById("userName").value;
         const userComment = document.getElementById("userComment").value;
         const submitBtn = feedbackForm.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
@@ -486,7 +507,7 @@
 
         const comment = {
           id: commentCounter,
-          author: userName,
+          author: customerName || "Customer",
           text: userComment,
           position: tempMarkerPosition,
           timestamp: new Date().toLocaleString(),
@@ -497,7 +518,8 @@
 
         if (saved) {
           comments.push(comment);
-          addMarker(comment);
+          removePreviewMarker(); // Remove preview marker
+          addMarker(comment); // Add permanent marker
           displayComments();
 
           // Reset form
@@ -533,7 +555,6 @@
               fields: {
                 'Project ID': projectId || 'No Project ID',
                 'Customer Name': customerName || 'Unknown',
-                'Reviewer Name': comment.author,
                 'Feedback': comment.text,
                 'Position X': comment.position ? comment.position.x.toFixed(2) : '0',
                 'Position Y': comment.position ? comment.position.y.toFixed(2) : '0',
