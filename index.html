@@ -524,11 +524,16 @@
           return;
         }
 
+        // Use full href to detect original URL (before Cloudflare rewrites)
+        const fullUrl = window.location.href;
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
 
-        // Check for /ORD-XXXXX in URL path (alphanumeric)
-        let pathMatch = urlPath.match(/\/ORD-([A-Z0-9]+)/i);
+        console.log("Full URL:", fullUrl);
+        console.log("Pathname:", urlPath);
+
+        // Check for /ORD-XXXXX in URL (use full URL to catch original path)
+        let pathMatch = fullUrl.match(/\.com\/ORD-([A-Z0-9]+)(?:\?|#|$)/i);
         if (pathMatch) {
           const orderId = pathMatch[1];
           console.log("Direct link detected for order:", orderId);
@@ -547,8 +552,8 @@
             form.dispatchEvent(new Event('submit'));
           }, 100);
         }
-        // Check for /XXXXX (alphanumeric, no ORD- prefix)
-        else if ((pathMatch = urlPath.match(/\/([A-Z0-9]+)$/i))) {
+        // Check for /XXXXX (alphanumeric, no ORD- prefix) - use full URL
+        else if ((pathMatch = fullUrl.match(/\.com\/([A-Z0-9]+)(?:\?|#|$)/i)) && !fullUrl.includes('.html')) {
           const orderId = pathMatch[1];
           console.log("Direct link detected for order:", orderId);
           isDirectLinkAccess = true;
