@@ -524,57 +524,25 @@
           return;
         }
 
-        // Use full href to detect original URL (before Cloudflare rewrites)
-        const fullUrl = window.location.href;
-        const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
 
-        console.log("Full URL:", fullUrl);
-        console.log("Pathname:", urlPath);
+        console.log("Full URL:", window.location.href);
+        console.log("Pathname:", window.location.pathname);
+        console.log("Search params:", window.location.search);
 
-        // Check for /ORD-XXXXX in URL (use full URL to catch original path)
-        let pathMatch = fullUrl.match(/\.com\/ORD-([A-Z0-9]+)(?:\?|#|$)/i);
-        if (pathMatch) {
-          const orderId = pathMatch[1];
-          console.log("Direct link detected for order:", orderId);
-          isDirectLinkAccess = true;
-
-          // Show full-screen loading overlay
-          const fullscreenLoading = document.getElementById("fullscreenLoading");
-          if (fullscreenLoading) {
-            fullscreenLoading.classList.add("show");
-            console.log("Showing fullscreen loading");
-          }
-
-          document.getElementById("orderId").value = `ORD-${orderId}`;
-          // Auto-submit the form
-          setTimeout(() => {
-            form.dispatchEvent(new Event('submit'));
-          }, 100);
-        }
-        // Check for /XXXXX (alphanumeric, no ORD- prefix) - use full URL
-        else if ((pathMatch = fullUrl.match(/\.com\/([A-Z0-9]+)(?:\?|#|$)/i)) && !fullUrl.includes('.html')) {
-          const orderId = pathMatch[1];
-          console.log("Direct link detected for order:", orderId);
-          isDirectLinkAccess = true;
-
-          // Show full-screen loading overlay
-          const fullscreenLoading = document.getElementById("fullscreenLoading");
-          if (fullscreenLoading) {
-            fullscreenLoading.classList.add("show");
-            console.log("Showing fullscreen loading");
-          }
-
-          document.getElementById("orderId").value = `ORD-${orderId}`;
-          // Auto-submit the form
-          setTimeout(() => {
-            form.dispatchEvent(new Event('submit'));
-          }, 100);
-        }
-        // Check for ?order=ORD-XXXXX in query params
-        else if (urlParams.get('order')) {
+        // Check for ?order= parameter (from _redirects or direct link)
+        if (urlParams.get('order')) {
           let orderId = urlParams.get('order');
+          console.log("Direct link detected with order parameter:", orderId);
           isDirectLinkAccess = true;
+
+          // Show full-screen loading overlay
+          const fullscreenLoading = document.getElementById("fullscreenLoading");
+          if (fullscreenLoading) {
+            fullscreenLoading.classList.add("show");
+            console.log("Showing fullscreen loading");
+          }
+
           // Add ORD- prefix if not present
           if (!orderId.toUpperCase().startsWith('ORD-')) {
             orderId = `ORD-${orderId}`;
