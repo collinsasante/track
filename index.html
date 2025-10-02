@@ -699,13 +699,21 @@
                 console.log("Design Draft record:", designDraftResponse);
 
                 if (designDraftResponse.fields) {
-                  const urlFields = ['Project File Link', 'Design URL', 'URL'];
+                  // Check for Design Draft 1 attachment field first (preferred)
+                  if (designDraftResponse.fields["Design Draft 1"] && Array.isArray(designDraftResponse.fields["Design Draft 1"]) && designDraftResponse.fields["Design Draft 1"].length > 0) {
+                    designUrl = designDraftResponse.fields["Design Draft 1"][0].url;
+                    console.log("Found design in 'Design Draft 1' attachment:", designUrl);
+                  }
+                  // Fallback to text URL fields
+                  else {
+                    const urlFields = ['Project File Link', 'Design URL', 'URL'];
 
-                  for (const fieldName of urlFields) {
-                    if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
-                      designUrl = designDraftResponse.fields[fieldName];
-                      console.log(`Found design URL in Design Drafts '${fieldName}':`, designUrl);
-                      break;
+                    for (const fieldName of urlFields) {
+                      if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
+                        designUrl = designDraftResponse.fields[fieldName];
+                        console.log(`Found design URL in Design Drafts '${fieldName}':`, designUrl);
+                        break;
+                      }
                     }
                   }
                 }
