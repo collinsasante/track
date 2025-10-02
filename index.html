@@ -611,10 +611,42 @@
           if (record && record.fields) {
             console.log("Record found! Available fields:", Object.keys(record.fields));
 
-            // For now, just use a placeholder design URL to test the redirect
-            const designUrl = "https://via.placeholder.com/800x600.png?text=Design+Coming+Soon";
+            // Check Design Drafts field - it's a linked record to Design Projects
+            const designDrafts = record.fields["Design Drafts"];
+            console.log("Design Drafts field:", designDrafts);
 
-            console.log("Using placeholder design URL for testing");
+            let designUrl = "https://via.placeholder.com/800x600.png?text=No+Design+Available";
+
+            // If Design Drafts is a linked record ID, we need to fetch that record
+            if (designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
+              const designProjectId = designDrafts[0];
+              console.log("Design Project ID:", designProjectId);
+
+              // Fetch the Design Project record to get the actual attachment
+              try {
+                const designProjectResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Projects/${designProjectId}`,
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                  },
+                });
+
+                console.log("Design Project record:", designProjectResponse);
+
+                // Check for Design Draft 1 attachment
+                if (designProjectResponse.fields && designProjectResponse.fields["Design Draft 1"]) {
+                  const drafts = designProjectResponse.fields["Design Draft 1"];
+                  if (Array.isArray(drafts) && drafts.length > 0) {
+                    designUrl = drafts[0].url;
+                    console.log("Found design URL:", designUrl);
+                  }
+                }
+              } catch (err) {
+                console.error("Error fetching design project:", err);
+              }
+            }
+
             displayOrderDetails(record, orderId, designUrl);
           } else {
             console.log("No record found");
