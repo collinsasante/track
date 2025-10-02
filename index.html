@@ -477,6 +477,13 @@
       window.addEventListener('DOMContentLoaded', async function() {
         // Load config first
         await loadConfig();
+
+        // Don't auto-search if we're on the Design Review page
+        if (window.location.pathname.includes('Design Review')) {
+          console.log("On Design Review page, skipping auto-search");
+          return;
+        }
+
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
 
