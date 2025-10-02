@@ -735,21 +735,27 @@
       function displayOrderDetails(record, orderId, designUrl) {
         const fields = record.fields;
 
-        // Build review URL
-        const baseUrl = window.location.href.split("/").slice(0, -1).join("/");
+        // Build review URL - use origin instead of removing last segment
+        const baseUrl = window.location.origin;
         // Use lookup fields from Project Information
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
         const reviewUrl = `${baseUrl}/Design Review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
         console.log("Review URL built:", reviewUrl);
 
-        // Check if user came from a direct link (URL contains order ID)
+        // Check if user came from a direct link (URL contains order ID in path OR params)
         const urlPath = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
         console.log("URL Path:", urlPath);
         console.log("URL Params:", urlParams.toString());
 
-        const isDirectLink = urlPath.match(/\/ORD-([A-Z0-9]+)/i) || urlPath.match(/\/([A-Z0-9]+)$/i) || urlParams.get('order');
+        // Check if order ID is in the URL (either in path or as parameter)
+        const hasOrderInPath = urlPath.match(/\/ORD-([A-Z0-9]+)/i) || urlPath.match(/\/([A-Z0-9]+)$/i);
+        const hasOrderInParams = urlParams.get('order');
+        const isDirectLink = hasOrderInPath || hasOrderInParams;
+
+        console.log("Has order in path?", hasOrderInPath);
+        console.log("Has order in params?", hasOrderInParams);
         console.log("Is direct link?", isDirectLink);
 
         // If it's a direct link, redirect immediately to Design Review
