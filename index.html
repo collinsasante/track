@@ -446,7 +446,7 @@
       window.CONFIG = {
         airtable: {
           baseId: "",
-          tableId: "Design Projects",
+          tableId: "Submissions",
           apiKey: "",
         },
       };
@@ -609,43 +609,13 @@
           }
 
           if (record && record.fields) {
-            console.log("Checking for design attachment fields...");
-            console.log("Available fields:", Object.keys(record.fields));
+            console.log("Record found! Available fields:", Object.keys(record.fields));
 
-            // Try to find the design in order of preference
-            let designUrl = null;
+            // For now, just use a placeholder design URL to test the redirect
+            const designUrl = "https://via.placeholder.com/800x600.png?text=Design+Coming+Soon";
 
-            // Check Design Draft 1 (Attachment field)
-            if (record.fields["Design Draft 1"] && Array.isArray(record.fields["Design Draft 1"]) && record.fields["Design Draft 1"].length > 0) {
-              designUrl = record.fields["Design Draft 1"][0].url;
-              console.log("Found design in 'Design Draft 1':", designUrl);
-            }
-            // Check Revision 3 (latest)
-            else if (record.fields["Revision 3"] && Array.isArray(record.fields["Revision 3"]) && record.fields["Revision 3"].length > 0) {
-              designUrl = record.fields["Revision 3"][0].url;
-              console.log("Found design in 'Revision 3':", designUrl);
-            }
-            // Check Revision 2
-            else if (record.fields["Revision 2"] && Array.isArray(record.fields["Revision 2"]) && record.fields["Revision 2"].length > 0) {
-              designUrl = record.fields["Revision 2"][0].url;
-              console.log("Found design in 'Revision 2':", designUrl);
-            }
-            // Check Revision 1
-            else if (record.fields["Revision 1"] && Array.isArray(record.fields["Revision 1"]) && record.fields["Revision 1"].length > 0) {
-              designUrl = record.fields["Revision 1"][0].url;
-              console.log("Found design in 'Revision 1':", designUrl);
-            }
-
-            if (designUrl) {
-              console.log("Final design URL:", designUrl);
-              displayOrderDetails(record, orderId, designUrl);
-            } else {
-              console.log("No design found in any attachment fields.");
-              console.log("Checked fields: Design Draft 1, Revision 1, Revision 2, Revision 3");
-              showError(
-                "Design not ready yet. Please check back later or contact us."
-              );
-            }
+            console.log("Using placeholder design URL for testing");
+            displayOrderDetails(record, orderId, designUrl);
           } else {
             console.log("No record found");
             showError(
