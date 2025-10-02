@@ -525,13 +525,35 @@
         }
 
         const urlParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash;
 
         console.log("Full URL:", window.location.href);
         console.log("Pathname:", window.location.pathname);
         console.log("Search params:", window.location.search);
+        console.log("Hash:", hash);
 
+        // Check for #ORD-XXXXX in hash (client-side routing - most reliable)
+        const hashMatch = hash.match(/#ORD-([A-Z0-9]+)/i);
+        if (hashMatch) {
+          const orderId = hashMatch[1];
+          console.log("Direct link detected with hash:", orderId);
+          isDirectLinkAccess = true;
+
+          // Show full-screen loading overlay
+          const fullscreenLoading = document.getElementById("fullscreenLoading");
+          if (fullscreenLoading) {
+            fullscreenLoading.classList.add("show");
+            console.log("Showing fullscreen loading");
+          }
+
+          document.getElementById("orderId").value = `ORD-${orderId}`;
+          // Auto-submit the form
+          setTimeout(() => {
+            form.dispatchEvent(new Event('submit'));
+          }, 100);
+        }
         // Check for ?order= parameter (from _redirects or direct link)
-        if (urlParams.get('order')) {
+        else if (urlParams.get('order')) {
           let orderId = urlParams.get('order');
           console.log("Direct link detected with order parameter:", orderId);
           isDirectLinkAccess = true;
