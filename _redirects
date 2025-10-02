@@ -1,3 +1,3 @@
 # Redirect order URLs to index with the order ID preserved
-# Only redirect paths that look like order IDs (alphanumeric), not .html files
-/ORD-:id   /index.html   200
+# Catch both /ORD-XXXXX and /XXXXX patterns (alphanumeric only)
+/:id   /index.html   200
