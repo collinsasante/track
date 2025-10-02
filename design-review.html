@@ -466,6 +466,7 @@
     </script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
       let comments = [];
       let commentCounter = 0;
@@ -622,6 +623,9 @@
           addMarker(comment); // Add permanent marker
           displayComments();
 
+          // Capture and upload annotated design
+          await captureAndUploadAnnotatedDesign();
+
           // Reset form
           feedbackForm.reset();
           commentForm.style.display = "none";
@@ -686,6 +690,69 @@
         });
 
         imageContainer.appendChild(marker);
+      }
+
+      /**
+       * Capture the design with all markers and upload to Airtable
+       */
+      async function captureAndUploadAnnotatedDesign() {
+        try {
+          console.log('Capturing annotated design...');
+
+          // Use html2canvas to capture the design container with markers
+          const canvas = await html2canvas(imageContainer, {
+            backgroundColor: null,
+            scale: 2, // Higher quality
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+          });
+
+          // Convert canvas to blob
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+
+          // Convert blob to base64 for Airtable
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+
+          await new Promise((resolve, reject) => {
+            reader.onloadend = async () => {
+              const base64data = reader.result;
+
+              // Upload to Airtable
+              try {
+                const response = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${window.CONFIG.airtable.apiKey}`,
+                    'Content-Type': 'application/json'
+                  },
+                  data: JSON.stringify({
+                    fields: {
+                      'Project ID': projectId || 'No Project ID',
+                      'Customer Name': customerName || 'Unknown',
+                      'Annotated Design': [{
+                        url: base64data
+                      }],
+                      'Total Comments': comments.length,
+                      'Timestamp': new Date().toLocaleString()
+                    }
+                  })
+                });
+                console.log('Annotated design uploaded successfully!');
+                resolve();
+              } catch (error) {
+                console.error('Error uploading annotated design:', error);
+                reject(error);
+              }
+            };
+            reader.onerror = reject;
+          });
+
+        } catch (error) {
+          console.error('Error capturing design:', error);
+        }
       }
 
       /**
