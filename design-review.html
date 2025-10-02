@@ -670,7 +670,16 @@
           return true;
         } catch (error) {
           console.error('Error saving to Airtable:', error);
-          alert('Error saving feedback. Please try again or contact support.');
+          console.error('Error details:', error.responseJSON || error.responseText);
+
+          let errorMsg = 'Error saving feedback. ';
+          if (error.status === 422) {
+            errorMsg += 'The "Design Feedback" table may not exist in Airtable yet. Please create it first.';
+          } else {
+            errorMsg += 'Please try again or contact support.';
+          }
+
+          alert(errorMsg);
           return false;
         }
       }
