@@ -150,7 +150,7 @@
       }
 
       .comment-label::before {
-        content: '';
+        content: "";
         position: absolute;
         width: 0;
         height: 0;
@@ -198,8 +198,14 @@
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
       }
 
       .comment-form-header {
@@ -441,7 +447,9 @@
           <div class="add-comment-form" id="commentForm" style="display: none">
             <div class="comment-form-header">
               <div class="user-avatar" id="userAvatar">C</div>
-              <div style="color: #ccc; font-size: 14px; font-weight: 500;">Add feedback</div>
+              <div style="color: #ccc; font-size: 14px; font-weight: 500">
+                Add feedback
+              </div>
             </div>
             <form id="feedbackForm">
               <div class="form-group">
@@ -453,7 +461,9 @@
                 ></textarea>
               </div>
               <div class="comment-form-actions">
-                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+                <button type="button" class="btn-cancel" id="cancelBtn">
+                  Cancel
+                </button>
                 <button type="submit" class="btn-primary">
                   <i class="fas fa-paper-plane"></i> Comment
                 </button>
@@ -477,7 +487,11 @@
             </div>
           </div>
 
-          <button id="submitAllBtn" class="btn-primary" style="display: none; margin-top: 20px;">
+          <button
+            id="submitAllBtn"
+            class="btn-primary"
+            style="display: none; margin-top: 20px"
+          >
             <i class="fas fa-paper-plane"></i> Submit All Feedback to Airtable
           </button>
         </div>
@@ -490,21 +504,25 @@
         airtable: {
           baseId: "",
           tableId: "Design Feedback",
-          apiKey: ""
-        }
+          apiKey: "",
+        },
       };
 
       // Load configuration from API
       async function loadConfig() {
         try {
-          const response = await fetch('/api/config');
+          const response = await fetch("/api/config");
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           const config = await response.json();
 
-          if (!config.airtable || !config.airtable.baseId || !config.airtable.apiKey) {
-            throw new Error('Invalid configuration received from server');
+          if (
+            !config.airtable ||
+            !config.airtable.baseId ||
+            !config.airtable.apiKey
+          ) {
+            throw new Error("Invalid configuration received from server");
           }
 
           window.CONFIG.airtable.baseId = config.airtable.baseId;
@@ -512,7 +530,9 @@
           console.log("Configuration loaded successfully");
         } catch (error) {
           console.error("Failed to load configuration:", error);
-          alert('Unable to load application configuration. Please refresh the page or contact support.');
+          alert(
+            "Unable to load application configuration. Please refresh the page or contact support."
+          );
         }
       }
 
@@ -537,35 +557,37 @@
 
       // Get URL parameters
       function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-        const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
         const results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        return results === null
+          ? ""
+          : decodeURIComponent(results[1].replace(/\+/g, " "));
       }
 
       // Load project details from URL
       function loadProjectDetails() {
-        projectId = getUrlParameter('project');
-        customerName = getUrlParameter('customer');
-        const designUrl = getUrlParameter('design');
+        projectId = getUrlParameter("project");
+        customerName = getUrlParameter("customer");
+        const designUrl = getUrlParameter("design");
 
         if (projectId) {
-          document.getElementById('projectInfo').innerHTML =
-            `Project ID: <strong>${escapeHtml(projectId)}</strong>${customerName ? ` | Customer: <strong>${escapeHtml(customerName)}</strong>` : ''}<br>` +
-            'Click anywhere on the design to add feedback. Your comments will help us perfect your design.';
+          document.getElementById("projectInfo").innerHTML =
+            `Project ID: <strong>${escapeHtml(projectId)}</strong>${customerName ? ` | Customer: <strong>${escapeHtml(customerName)}</strong>` : ""}<br>` +
+            "Click anywhere on the design to add feedback. Your comments will help us perfect your design.";
         }
 
         // Set user avatar initial
         if (customerName) {
           const initial = customerName.charAt(0).toUpperCase();
-          document.getElementById('userAvatar').textContent = initial;
+          document.getElementById("userAvatar").textContent = initial;
         }
 
         if (designUrl) {
           designImage.src = designUrl;
-          designImage.onerror = function() {
-            alert('Error loading design image. Please check the URL.');
-            designImage.src = 'assets/images/left-bg.gif';
+          designImage.onerror = function () {
+            alert("Error loading design image. Please check the URL.");
+            designImage.src = "assets/images/left-bg.gif";
           };
         }
       }
@@ -586,7 +608,7 @@
           positionCommentForm(e.clientX, e.clientY);
 
           commentForm.style.display = "block";
-          document.getElementById('userComment').focus();
+          document.getElementById("userComment").focus();
         }
       });
 
@@ -607,42 +629,45 @@
         left = Math.min(Math.max(padding, left), maxLeft);
         top = Math.min(Math.max(padding, top), maxTop);
 
-        commentForm.style.left = left + 'px';
-        commentForm.style.top = top + 'px';
+        commentForm.style.left = left + "px";
+        commentForm.style.top = top + "px";
       }
 
       // Cancel button handler
-      document.getElementById('cancelBtn').addEventListener('click', function() {
-        commentForm.style.display = 'none';
-        document.getElementById('userComment').value = '';
-        removePreviewMarker();
-        tempMarkerPosition = null;
-      });
+      document
+        .getElementById("cancelBtn")
+        .addEventListener("click", function () {
+          commentForm.style.display = "none";
+          document.getElementById("userComment").value = "";
+          removePreviewMarker();
+          tempMarkerPosition = null;
+        });
 
       // Show preview marker while typing
       function showPreviewMarker(x, y) {
         // Remove any existing preview marker
-        const existingPreview = document.getElementById('preview-marker');
+        const existingPreview = document.getElementById("preview-marker");
         if (existingPreview) {
           existingPreview.remove();
         }
 
         // Create preview marker
         const marker = document.createElement("div");
-        marker.id = 'preview-marker';
+        marker.id = "preview-marker";
         marker.className = "comment-marker";
         marker.style.left = x + "%";
         marker.style.top = y + "%";
         marker.style.backgroundColor = "#f7933a";
         marker.style.opacity = "0.7";
-        marker.innerHTML = '<i class="fas fa-pen" style="font-size: 10px;"></i>';
+        marker.innerHTML =
+          '<i class="fas fa-pen" style="font-size: 10px;"></i>';
 
         imageContainer.appendChild(marker);
       }
 
       // Remove preview marker when form is hidden
       function removePreviewMarker() {
-        const existingPreview = document.getElementById('preview-marker');
+        const existingPreview = document.getElementById("preview-marker");
         if (existingPreview) {
           existingPreview.remove();
         }
@@ -656,13 +681,19 @@
 
         // Validate comment text
         if (!userComment) {
-          alert('Please enter a comment before submitting.');
+          alert("Please enter a comment before submitting.");
           return;
         }
 
         // Validate position exists
-        if (!tempMarkerPosition || typeof tempMarkerPosition.x !== 'number' || typeof tempMarkerPosition.y !== 'number') {
-          alert('Invalid marker position. Please try clicking on the design again.');
+        if (
+          !tempMarkerPosition ||
+          typeof tempMarkerPosition.x !== "number" ||
+          typeof tempMarkerPosition.y !== "number"
+        ) {
+          alert(
+            "Invalid marker position. Please try clicking on the design again."
+          );
           return;
         }
 
@@ -689,10 +720,9 @@
 
         // Show submit all button if we have comments
         if (comments.length > 0) {
-          document.getElementById('submitAllBtn').style.display = 'block';
+          document.getElementById("submitAllBtn").style.display = "block";
         }
       });
-
 
       function addMarker(comment) {
         const marker = document.createElement("div");
@@ -720,7 +750,7 @@
         if (markerX > 50) {
           // Marker on right side of image, show label on left
           label.classList.add("left");
-          label.style.right = (100 - markerX) + "%";
+          label.style.right = 100 - markerX + "%";
           label.style.left = "auto";
           label.style.marginRight = "35px";
         } else {
@@ -735,14 +765,13 @@
         imageContainer.appendChild(label);
       }
 
-
       /**
        * Escapes HTML special characters to prevent XSS attacks
        * @param {string} text - The text to escape
        * @returns {string} - HTML-safe text
        */
       function escapeHtml(text) {
-        const div = document.createElement('div');
+        const div = document.createElement("div");
         div.textContent = text;
         return div.innerHTML;
       }
@@ -777,129 +806,157 @@
       }
 
       // Submit all feedback to Airtable with screenshot
-      document.getElementById('submitAllBtn').addEventListener('click', async function() {
-        const btn = this;
-        const originalText = btn.innerHTML;
+      document
+        .getElementById("submitAllBtn")
+        .addEventListener("click", async function () {
+          const btn = this;
+          const originalText = btn.innerHTML;
 
-        // Validate we have comments to submit
-        if (!comments || comments.length === 0) {
-          alert('No comments to submit. Please add at least one comment first.');
-          return;
-        }
-
-        // Validate configuration is loaded
-        if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
-          alert('Application configuration not loaded. Please refresh the page and try again.');
-          return;
-        }
-
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading screenshot and saving feedback...';
-        btn.disabled = true;
-
-        try {
-          // 1. Capture screenshot with markers
-          const canvas = await html2canvas(imageContainer, {
-            backgroundColor: null,
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            allowTaint: true
-          });
-
-          if (!canvas) {
-            throw new Error('Failed to capture design screenshot');
+          // Validate we have comments to submit
+          if (!comments || comments.length === 0) {
+            alert(
+              "No comments to submit. Please add at least one comment first."
+            );
+            return;
           }
 
-          // 2. Convert to blob
-          const blob = await new Promise((resolve, reject) => {
-            canvas.toBlob(blob => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error('Failed to convert canvas to blob'));
-              }
-            }, 'image/png');
-          });
-
-          // 3. Upload to Cloudinary
-          const formData = new FormData();
-          formData.append('file', blob);
-          formData.append('upload_preset', 'feedback');
-          formData.append('cloud_name', 'dfm3kmq1y');
-
-          const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dfm3kmq1y/image/upload', {
-            method: 'POST',
-            body: formData
-          });
-
-          if (!cloudinaryResponse.ok) {
-            throw new Error(`Cloudinary upload failed with status: ${cloudinaryResponse.status}`);
+          // Validate configuration is loaded
+          if (
+            !window.CONFIG.airtable.baseId ||
+            !window.CONFIG.airtable.apiKey
+          ) {
+            alert(
+              "Application configuration not loaded. Please refresh the page and try again."
+            );
+            return;
           }
 
-          const cloudinaryData = await cloudinaryResponse.json();
+          btn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Uploading screenshot and saving feedback...';
+          btn.disabled = true;
 
-          if (cloudinaryData.error) {
-            throw new Error(`Cloudinary error: ${cloudinaryData.error.message}`);
-          }
+          try {
+            // 1. Capture screenshot with markers
+            const canvas = await html2canvas(imageContainer, {
+              backgroundColor: null,
+              scale: 2,
+              logging: false,
+              useCORS: true,
+              allowTaint: true,
+            });
 
-          if (!cloudinaryData.secure_url) {
-            throw new Error('Cloudinary did not return an image URL');
-          }
-
-          const imageUrl = cloudinaryData.secure_url;
-
-          // 4. Combine all comments into one formatted string
-          const allComments = comments.map((c, index) =>
-            `[${index + 1}] ${c.text} (Position: ${c.position.x.toFixed(1)}, ${c.position.y.toFixed(1)})`
-          ).join('\n\n');
-
-          // 5. Save ONE record to Airtable with all comments and image
-          const airtablePayload = {
-            fields: {
-              'Order ID': projectId || 'No Project ID',
-              'Customer': customerName || 'Unknown',
-              'Feedback': allComments,
-              'Annotated Design': [{
-                url: imageUrl
-              }],
-              'Total Comments': comments.length,
-              'Created': new Date().toLocaleString()
+            if (!canvas) {
+              throw new Error("Failed to capture design screenshot");
             }
-          };
 
-          const airtableResponse = await $.ajax({
-            url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${window.CONFIG.airtable.apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            data: JSON.stringify(airtablePayload)
-          });
+            // 2. Convert to blob
+            const blob = await new Promise((resolve, reject) => {
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error("Failed to convert canvas to blob"));
+                }
+              }, "image/png");
+            });
 
-          console.log('Feedback submitted successfully! Record ID:', airtableResponse.id);
-          alert(`Success! ${comments.length} comment${comments.length > 1 ? 's' : ''} and annotated design submitted to Airtable.`);
+            // 3. Upload to Cloudinary
+            const formData = new FormData();
+            formData.append("file", blob);
+            formData.append("upload_preset", "feedback");
+            formData.append("cloud_name", "dfm3kmq1y");
 
-          // Hide the submit button
-          btn.style.display = 'none';
+            const cloudinaryResponse = await fetch(
+              "https://api.cloudinary.com/v1_1/dfm3kmq1y/image/upload",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
 
-        } catch (error) {
-          console.error('Error submitting feedback:', error);
+            if (!cloudinaryResponse.ok) {
+              throw new Error(
+                `Cloudinary upload failed with status: ${cloudinaryResponse.status}`
+              );
+            }
 
-          let errorMessage = 'Failed to submit feedback. ';
-          if (error.responseJSON && error.responseJSON.error) {
-            errorMessage += error.responseJSON.error.message || error.responseJSON.error.type;
-          } else if (error.message) {
-            errorMessage += error.message;
-          } else {
-            errorMessage += 'Please try again or contact support.';
+            const cloudinaryData = await cloudinaryResponse.json();
+
+            if (cloudinaryData.error) {
+              throw new Error(
+                `Cloudinary error: ${cloudinaryData.error.message}`
+              );
+            }
+
+            if (!cloudinaryData.secure_url) {
+              throw new Error("Cloudinary did not return an image URL");
+            }
+
+            const imageUrl = cloudinaryData.secure_url;
+
+            // 4. Combine all comments into one formatted string
+            const allComments = comments
+              .map(
+                (c, index) =>
+                  `[${index + 1}] ${c.text} (Position: ${c.position.x.toFixed(1)}, ${c.position.y.toFixed(1)})`
+              )
+              .join("\n\n");
+
+            // 5. Save ONE record to Airtable with all comments and image
+            const airtablePayload = {
+              fields: {
+                "Order ID": projectId || "No Project ID",
+                Customer: customerName || "Unknown",
+                Feedback: allComments,
+                "Annotated Design": [
+                  {
+                    url: imageUrl,
+                  },
+                ],
+                "Total Comments": comments.length,
+                Created: new Date().toLocaleString(),
+              },
+            };
+
+            const airtableResponse = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                "Content-Type": "application/json",
+              },
+              data: JSON.stringify(airtablePayload),
+            });
+
+            console.log(
+              "Feedback submitted successfully! Record ID:",
+              airtableResponse.id
+            );
+            alert(
+              `Success! ${comments.length} comment${comments.length > 1 ? "s" : ""} is submitted.`
+            );
+
+            // Hide the submit button
+            btn.style.display = "none";
+          } catch (error) {
+            console.error("Error submitting feedback:", error);
+
+            let errorMessage = "Failed to submit feedback. ";
+            if (error.responseJSON && error.responseJSON.error) {
+              errorMessage +=
+                error.responseJSON.error.message ||
+                error.responseJSON.error.type;
+            } else if (error.message) {
+              errorMessage += error.message;
+            } else {
+              errorMessage += "Please try again or contact support.";
+            }
+
+            alert(errorMessage);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
           }
-
-          alert(errorMessage);
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }
-      });
+        });
 
       // Initialize
       loadProjectDetails();
