@@ -623,8 +623,9 @@
           addMarker(comment); // Add permanent marker
           displayComments();
 
-          // Capture and upload annotated design
-          await captureAndUploadAnnotatedDesign();
+          // TODO: Capture and upload annotated design
+          // Currently disabled - Airtable requires file URLs, not base64
+          // await captureAndUploadAnnotatedDesign();
 
           // Reset form
           feedbackForm.reset();
