@@ -660,8 +660,8 @@
                 'Order ID': projectId || 'No Project ID',
                 'Customer': customerName || 'Unknown',
                 'Feedback': comment.text,
-                'X Position': comment.position ? comment.position.x.toFixed(2) : '0',
-                'Y Position': comment.position ? comment.position.y.toFixed(2) : '0',
+                'X Position': comment.position ? parseFloat(comment.position.x.toFixed(2)) : 0,
+                'Y Position': comment.position ? parseFloat(comment.position.y.toFixed(2)) : 0,
                 'Created': comment.timestamp,
                 'Marker ID': comment.id
               }
