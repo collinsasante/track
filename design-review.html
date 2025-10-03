@@ -498,12 +498,21 @@
       async function loadConfig() {
         try {
           const response = await fetch('/api/config');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           const config = await response.json();
+
+          if (!config.airtable || !config.airtable.baseId || !config.airtable.apiKey) {
+            throw new Error('Invalid configuration received from server');
+          }
+
           window.CONFIG.airtable.baseId = config.airtable.baseId;
           window.CONFIG.airtable.apiKey = config.airtable.apiKey;
-          console.log("Config loaded successfully");
+          console.log("Configuration loaded successfully");
         } catch (error) {
-          console.error("Failed to load config:", error);
+          console.error("Failed to load configuration:", error);
+          alert('Unable to load application configuration. Please refresh the page or contact support.');
         }
       }
 
@@ -643,7 +652,19 @@
       feedbackForm.addEventListener("submit", function (e) {
         e.preventDefault();
 
-        const userComment = document.getElementById("userComment").value;
+        const userComment = document.getElementById("userComment").value.trim();
+
+        // Validate comment text
+        if (!userComment) {
+          alert('Please enter a comment before submitting.');
+          return;
+        }
+
+        // Validate position exists
+        if (!tempMarkerPosition || typeof tempMarkerPosition.x !== 'number' || typeof tempMarkerPosition.y !== 'number') {
+          alert('Invalid marker position. Please try clicking on the design again.');
+          return;
+        }
 
         commentCounter++;
 
@@ -714,68 +735,6 @@
         imageContainer.appendChild(label);
       }
 
-      /**
-       * Capture the design with all markers and upload to Airtable
-       */
-      async function captureAndUploadAnnotatedDesign() {
-        try {
-          console.log('Capturing annotated design...');
-
-          // Use html2canvas to capture the design container with markers
-          const canvas = await html2canvas(imageContainer, {
-            backgroundColor: null,
-            scale: 2, // Higher quality
-            logging: false,
-            useCORS: true,
-            allowTaint: true
-          });
-
-          // Convert canvas to blob
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-
-          // Convert blob to base64 for Airtable
-          const reader = new FileReader();
-          reader.readAsDataURL(blob);
-
-          await new Promise((resolve, reject) => {
-            reader.onloadend = async () => {
-              const base64data = reader.result;
-
-              // Upload to Airtable
-              try {
-                const response = await $.ajax({
-                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${window.CONFIG.airtable.apiKey}`,
-                    'Content-Type': 'application/json'
-                  },
-                  data: JSON.stringify({
-                    fields: {
-                      'Order ID': projectId || 'No Project ID',
-                      'Customer': customerName || 'Unknown',
-                      'Annotated Design': [{
-                        url: base64data
-                      }],
-                      'Total Comments': comments.length,
-                      'Created': new Date().toLocaleString()
-                    }
-                  })
-                });
-                console.log('Annotated design uploaded successfully!');
-                resolve();
-              } catch (error) {
-                console.error('Error uploading annotated design:', error);
-                reject(error);
-              }
-            };
-            reader.onerror = reject;
-          });
-
-        } catch (error) {
-          console.error('Error capturing design:', error);
-        }
-      }
 
       /**
        * Escapes HTML special characters to prevent XSS attacks
@@ -821,12 +780,24 @@
       document.getElementById('submitAllBtn').addEventListener('click', async function() {
         const btn = this;
         const originalText = btn.innerHTML;
+
+        // Validate we have comments to submit
+        if (!comments || comments.length === 0) {
+          alert('No comments to submit. Please add at least one comment first.');
+          return;
+        }
+
+        // Validate configuration is loaded
+        if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
+          alert('Application configuration not loaded. Please refresh the page and try again.');
+          return;
+        }
+
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading screenshot and saving feedback...';
         btn.disabled = true;
 
         try {
           // 1. Capture screenshot with markers
-          console.log('Capturing annotated design...');
           const canvas = await html2canvas(imageContainer, {
             backgroundColor: null,
             scale: 2,
@@ -835,29 +806,47 @@
             allowTaint: true
           });
 
+          if (!canvas) {
+            throw new Error('Failed to capture design screenshot');
+          }
+
           // 2. Convert to blob
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          const blob = await new Promise((resolve, reject) => {
+            canvas.toBlob(blob => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to convert canvas to blob'));
+              }
+            }, 'image/png');
+          });
 
           // 3. Upload to Cloudinary
-          console.log('Uploading to Cloudinary...');
           const formData = new FormData();
           formData.append('file', blob);
-          formData.append('upload_preset', 'feedback'); // Your Cloudinary unsigned preset
-          formData.append('cloud_name', 'dfm3kmq1y'); // Your Cloudinary cloud name
+          formData.append('upload_preset', 'feedback');
+          formData.append('cloud_name', 'dfm3kmq1y');
 
           const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dfm3kmq1y/image/upload', {
             method: 'POST',
             body: formData
           });
 
+          if (!cloudinaryResponse.ok) {
+            throw new Error(`Cloudinary upload failed with status: ${cloudinaryResponse.status}`);
+          }
+
           const cloudinaryData = await cloudinaryResponse.json();
 
           if (cloudinaryData.error) {
-            throw new Error('Failed to upload image to Cloudinary: ' + cloudinaryData.error.message);
+            throw new Error(`Cloudinary error: ${cloudinaryData.error.message}`);
+          }
+
+          if (!cloudinaryData.secure_url) {
+            throw new Error('Cloudinary did not return an image URL');
           }
 
           const imageUrl = cloudinaryData.secure_url;
-          console.log('Image uploaded successfully:', imageUrl);
 
           // 4. Combine all comments into one formatted string
           const allComments = comments.map((c, index) =>
@@ -865,10 +854,6 @@
           ).join('\n\n');
 
           // 5. Save ONE record to Airtable with all comments and image
-          console.log('Saving feedback to Airtable...');
-          console.log('Image URL:', imageUrl);
-          console.log('All comments:', allComments);
-
           const airtablePayload = {
             fields: {
               'Order ID': projectId || 'No Project ID',
@@ -882,8 +867,6 @@
             }
           };
 
-          console.log('Airtable payload:', JSON.stringify(airtablePayload, null, 2));
-
           const airtableResponse = await $.ajax({
             url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
             method: 'POST',
@@ -894,16 +877,25 @@
             data: JSON.stringify(airtablePayload)
           });
 
-          console.log('Airtable response:', airtableResponse);
-          console.log('All feedback submitted successfully!');
-          alert(`Success! ${comments.length} comments and annotated design submitted to Airtable.\n\nImage URL: ${imageUrl}`);
+          console.log('Feedback submitted successfully! Record ID:', airtableResponse.id);
+          alert(`Success! ${comments.length} comment${comments.length > 1 ? 's' : ''} and annotated design submitted to Airtable.`);
 
           // Hide the submit button
           btn.style.display = 'none';
 
         } catch (error) {
           console.error('Error submitting feedback:', error);
-          alert('Error submitting feedback: ' + (error.message || 'Please try again or contact support.'));
+
+          let errorMessage = 'Failed to submit feedback. ';
+          if (error.responseJSON && error.responseJSON.error) {
+            errorMessage += error.responseJSON.error.message || error.responseJSON.error.type;
+          } else if (error.message) {
+            errorMessage += error.message;
+          } else {
+            errorMessage += 'Please try again or contact support.';
+          }
+
+          alert(errorMessage);
           btn.innerHTML = originalText;
           btn.disabled = false;
         }

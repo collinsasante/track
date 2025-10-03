@@ -504,12 +504,21 @@
       async function loadConfig() {
         try {
           const response = await fetch('/api/config');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           const config = await response.json();
+
+          if (!config.airtable || !config.airtable.baseId || !config.airtable.apiKey) {
+            throw new Error('Invalid configuration received from server');
+          }
+
           window.CONFIG.airtable.baseId = config.airtable.baseId;
           window.CONFIG.airtable.apiKey = config.airtable.apiKey;
-          console.log("Config loaded successfully");
+          console.log("Configuration loaded successfully");
         } catch (error) {
-          console.error("Failed to load config:", error);
+          console.error("Failed to load configuration:", error);
+          showError('Unable to load application configuration. Please refresh the page or contact support.');
         }
       }
 
@@ -520,22 +529,15 @@
 
         // Don't auto-search if we're on the Design Review page
         if (window.location.pathname.includes('design-review')) {
-          console.log("On Design Review page, skipping auto-search");
           return;
         }
 
         const urlParams = new URLSearchParams(window.location.search);
         const hash = window.location.hash;
 
-        console.log("Full URL:", window.location.href);
-        console.log("Pathname:", window.location.pathname);
-        console.log("Search params:", window.location.search);
-        console.log("Hash:", hash);
-
         // Check for #ORD-XXXXX or #XXXXX in hash (client-side routing - most reliable)
         if (hash) {
           let orderId = hash.substring(1); // Remove the # character
-          console.log("Hash detected:", orderId);
 
           // If it already starts with ORD-, use as-is
           // Otherwise, add ORD- prefix
@@ -543,14 +545,12 @@
             orderId = `ORD-${orderId}`;
           }
 
-          console.log("Direct link detected with hash, normalized order ID:", orderId);
           isDirectLinkAccess = true;
 
           // Show full-screen loading overlay
           const fullscreenLoading = document.getElementById("fullscreenLoading");
           if (fullscreenLoading) {
             fullscreenLoading.classList.add("show");
-            console.log("Showing fullscreen loading");
           }
 
           document.getElementById("orderId").value = orderId;
@@ -562,14 +562,12 @@
         // Check for ?order= parameter (from _redirects or direct link)
         else if (urlParams.get('order')) {
           let orderId = urlParams.get('order');
-          console.log("Direct link detected with order parameter:", orderId);
           isDirectLinkAccess = true;
 
           // Show full-screen loading overlay
           const fullscreenLoading = document.getElementById("fullscreenLoading");
           if (fullscreenLoading) {
             fullscreenLoading.classList.add("show");
-            console.log("Showing fullscreen loading");
           }
 
           // Add ORD- prefix if not present
@@ -589,9 +587,21 @@
 
         const orderId = document.getElementById("orderId").value.trim();
 
+        // Validate Order ID is not empty
+        if (!orderId) {
+          showError('Please enter an Order ID');
+          return;
+        }
+
         // Validate Order ID format
         if (!orderId.toUpperCase().startsWith("ORD-")) {
           showError('Please enter a valid Order ID starting with "ORD-"');
+          return;
+        }
+
+        // Validate configuration is loaded
+        if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
+          showError('Application configuration not loaded. Please refresh the page and try again.');
           return;
         }
 
@@ -617,13 +627,8 @@
       async function findOrder(orderId) {
         if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
           showError("Configuration error. Please contact support.");
-          console.error("Missing Airtable credentials");
           return;
         }
-
-        console.log("Searching for order:", orderId);
-        console.log("Base ID:", window.CONFIG.airtable.baseId);
-        console.log("Table:", window.CONFIG.airtable.tableId);
 
         try {
           // Try to find by record ID first
@@ -631,7 +636,6 @@
 
           // If it looks like a record ID (starts with rec)
           if (orderId.startsWith("rec")) {
-            console.log("Attempting to find by record ID:", orderId);
             try {
               const response = await $.ajax({
                 url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}/${orderId}`,
@@ -641,9 +645,8 @@
                 },
               });
               record = response;
-              console.log("Found record by ID:", record);
             } catch (err) {
-              console.log("Record not found with ID:", err);
+              // Record not found, will try formula search
             }
           }
 
@@ -651,8 +654,6 @@
           if (!record) {
             const orderIdWithPrefix = `ORD-${orderId}`;
             const formula = `OR({Order Number}='${orderIdWithPrefix}', {Order Number}='${orderId}')`;
-
-            console.log("Searching with formula:", formula);
 
             const response = await $.ajax({
               url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}`,
@@ -666,31 +667,20 @@
               }
             });
 
-            console.log("Search response:", response);
-
             if (response.records && response.records.length > 0) {
               record = response.records[0];
-              console.log("Found record:", record);
-              console.log("Record fields:", record.fields);
-              console.log("Available field names:", Object.keys(record.fields));
-            } else {
-              console.log("No records found matching formula");
             }
           }
 
           if (record && record.fields) {
-            console.log("Record found! Available fields:", Object.keys(record.fields));
-
             // Check Discovery Call Records field - it contains the Project File Link
             const discoveryCallRecords = record.fields["Discovery Call Records"];
-            console.log("Discovery Call Records field:", discoveryCallRecords);
 
             let designUrl = "https://via.placeholder.com/800x600.png?text=No+Design+Available";
 
             // Fetch Discovery Call Records to get Project File Link (Google Drive URL)
             if (discoveryCallRecords && Array.isArray(discoveryCallRecords) && discoveryCallRecords.length > 0) {
               const discoveryCallId = discoveryCallRecords[0];
-              console.log("Discovery Call Record ID:", discoveryCallId);
 
               try {
                 const discoveryCallResponse = await $.ajax({
@@ -700,9 +690,6 @@
                     Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
                   },
                 });
-
-                console.log("Discovery Call record:", discoveryCallResponse);
-                console.log("Discovery Call fields:", Object.keys(discoveryCallResponse.fields || {}));
 
                 // Look for Project File Link (Google Drive URL)
                 if (discoveryCallResponse.fields) {
@@ -720,7 +707,6 @@
                   for (const fieldName of urlFields) {
                     if (discoveryCallResponse.fields[fieldName] && typeof discoveryCallResponse.fields[fieldName] === 'string') {
                       designUrl = discoveryCallResponse.fields[fieldName];
-                      console.log(`Found design URL in '${fieldName}':`, designUrl);
                       break;
                     }
                   }
@@ -733,9 +719,6 @@
                     );
                     if (urlField) {
                       designUrl = discoveryCallResponse.fields[urlField];
-                      console.log(`Found design URL in '${urlField}':`, designUrl);
-                    } else {
-                      console.log("No design URL found in Discovery Call Records");
                     }
                   }
                 }
@@ -748,7 +731,6 @@
             const designDrafts = record.fields["Design Drafts"];
             if (designUrl.includes('placeholder') && designDrafts && Array.isArray(designDrafts) && designDrafts.length > 0) {
               const designDraftId = designDrafts[0];
-              console.log("Trying Design Drafts as fallback, ID:", designDraftId);
 
               try {
                 const designDraftResponse = await $.ajax({
@@ -759,13 +741,10 @@
                   },
                 });
 
-                console.log("Design Draft record:", designDraftResponse);
-
                 if (designDraftResponse.fields) {
                   // Check for Design Draft 1 attachment field first (preferred)
                   if (designDraftResponse.fields["Design Draft 1"] && Array.isArray(designDraftResponse.fields["Design Draft 1"]) && designDraftResponse.fields["Design Draft 1"].length > 0) {
                     designUrl = designDraftResponse.fields["Design Draft 1"][0].url;
-                    console.log("Found design in 'Design Draft 1' attachment:", designUrl);
                   }
                   // Fallback to text URL fields
                   else {
@@ -774,7 +753,6 @@
                     for (const fieldName of urlFields) {
                       if (designDraftResponse.fields[fieldName] && typeof designDraftResponse.fields[fieldName] === 'string') {
                         designUrl = designDraftResponse.fields[fieldName];
-                        console.log(`Found design URL in Design Drafts '${fieldName}':`, designUrl);
                         break;
                       }
                     }
@@ -791,13 +769,11 @@
               if (fileIdMatch) {
                 const fileId = fileIdMatch[1];
                 designUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                console.log("Converted Google Drive URL to direct link:", designUrl);
               }
             }
 
             displayOrderDetails(record, orderId, designUrl);
           } else {
-            console.log("No record found");
             showError(
               "Order not found. Please check your Order ID and try again."
             );
@@ -819,17 +795,11 @@
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
         const reviewUrl = `${baseUrl}/design-review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
-        console.log("Review URL built:", reviewUrl);
-        console.log("Is direct link access?", isDirectLinkAccess);
-
         // If it's a direct link, redirect immediately to Design Review
         if (isDirectLinkAccess) {
-          console.log("Redirecting to:", reviewUrl);
           window.location.href = reviewUrl;
           return;
         }
-
-        console.log("Not redirecting - showing order details instead");
 
         // Otherwise, show the order details (manual search)
         const productName = fields["Product Name (from Project Information)"] || fields["Name"] || fields["Product Name"] || "N/A";

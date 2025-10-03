@@ -6,20 +6,24 @@ This guide will help you set up the required Airtable tables for the design revi
 
 In your Airtable base, create a new table called **"Design Feedback"** with these fields:
 
-### Required Fields:
+### Required Fields (Only 6 fields needed!):
 
 | Field Name | Field Type | Description |
 |------------|------------|-------------|
 | **Order ID** | Single line text | The order ID (e.g., "ORD-5CtOu") |
 | **Customer** | Single line text | Name of the customer |
-| **Feedback** | Long text | ALL comments combined (one per line with positions) |
-| **Annotated Design** | Attachment | Screenshot with ALL markers overlaid |
-| **Total Comments** | Number | Count of markers |
-| **Created** | Single line text | When submitted |
+| **Feedback** | Long text | ALL comments with positions (formatted automatically) |
+| **Annotated Design** | Attachment | Screenshot with markers + comment text labels |
+| **Total Comments** | Number (Integer) | Count of how many comments |
+| **Created** | Single line text or Date | When submitted |
 
-**Note:** Create these fields exactly as shown (case-sensitive).
+**Note:** Create these fields EXACTLY as shown (case-sensitive).
 
-**Important:** Each submission creates ONE record with all feedback combined, not multiple records!
+**Important:**
+- Each submission = ONE record
+- All feedback combined in one field
+- Screenshot shows everything visually
+- NO need for individual X/Y position fields!
 
 ### Quick Setup Steps:
 
