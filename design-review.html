@@ -776,10 +776,10 @@
           console.log('Uploading to Cloudinary...');
           const formData = new FormData();
           formData.append('file', blob);
-          formData.append('upload_preset', 'ml_default'); // Cloudinary unsigned preset
-          formData.append('cloud_name', 'dqw8rkxcd'); // Your Cloudinary cloud name
+          formData.append('upload_preset', 'dfm3kmq1y'); // Your Cloudinary unsigned preset
+          formData.append('cloud_name', 'dfm3kmq1y'); // Your Cloudinary cloud name
 
-          const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dqw8rkxcd/image/upload', {
+          const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dfm3kmq1y/image/upload', {
             method: 'POST',
             body: formData
           });
