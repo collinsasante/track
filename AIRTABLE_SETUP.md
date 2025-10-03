@@ -10,40 +10,40 @@ In your Airtable base, create a new table called **"Design Feedback"** with thes
 
 | Field Name | Field Type | Description |
 |------------|------------|-------------|
-| **Name** | Single line text | The order ID (e.g., "ORD-5CtOu") - Auto-created by Airtable |
+| **Order ID** | Single line text | The order ID (e.g., "ORD-5CtOu") |
 | **Customer** | Single line text | Name of the customer |
-| **Comment** | Long text | The comment/feedback text |
-| **X** | Number | X coordinate (0-100) |
-| **Y** | Number | Y coordinate (0-100) |
-| **Marker** | Number | The marker ID (1, 2, 3...) |
-| **Date** | Single line text | When submitted |
-| **Screenshot** | Attachment | Screenshot with markers |
-| **Total** | Number | Count of markers |
+| **Feedback** | Long text | The comment/feedback text |
+| **X Position** | Number | X coordinate (0-100) |
+| **Y Position** | Number | Y coordinate (0-100) |
+| **Marker ID** | Number | The marker ID (1, 2, 3...) |
+| **Created** | Single line text | When submitted |
+| **Annotated Design** | Attachment | Screenshot with markers |
+| **Total Comments** | Number | Count of markers |
 
-**Note:** The "Name" field is automatically created by Airtable when you create a new table. Just add the other fields to match the table above.
+**Note:** Create these fields exactly as shown (case-sensitive).
 
 ### Quick Setup Steps:
 
 1. Open your Airtable base
 2. Click **"Add or import"** → **"Create empty table"**
 3. Name it: `Design Feedback`
-4. The "Name" field is already created - keep it!
-5. Click **"+"** to add these fields:
+4. Click **"+"** to add these fields (exact names, case-sensitive):
+   - **Order ID** (Single line text)
    - **Customer** (Single line text)
-   - **Comment** (Long text)
-   - **X** (Number - Decimal, 2 places)
-   - **Y** (Number - Decimal, 2 places)
-   - **Marker** (Number - Integer)
-   - **Date** (Single line text)
-   - **Screenshot** (Attachment) ← Important!
-   - **Total** (Number - Integer)
+   - **Feedback** (Long text)
+   - **X Position** (Number - Decimal, 2 places)
+   - **Y Position** (Number - Decimal, 2 places)
+   - **Marker ID** (Number - Integer)
+   - **Created** (Single line text)
+   - **Annotated Design** (Attachment) ← Important!
+   - **Total Comments** (Number - Integer)
 
 ## Field Settings:
 
-- **X** and **Y**: Format as "Decimal" with 2 decimal places
-- **Marker** and **Total**: Format as "Integer"
-- **Date**: Can also be "Date" field type if preferred
-- **Screenshot**: MUST be "Attachment" type to receive images
+- **X Position** and **Y Position**: Format as "Decimal" with 2 decimal places
+- **Marker ID** and **Total Comments**: Format as "Integer"
+- **Created**: Can also be "Date" field type if preferred
+- **Annotated Design**: MUST be "Attachment" type to receive images
 
 ## Testing:
 
@@ -59,7 +59,7 @@ After creating the table, try submitting feedback on the design review page. You
 - Verify all field names match exactly (case-sensitive)
 
 ### No image uploaded
-- Make sure "Annotated Design" is an **Attachment** field type
+- Make sure "Annotated Design" is an **Attachment** field type (not Single line text or URL)
 - Check browser console for errors
 
 ## Optional: Link to Other Tables

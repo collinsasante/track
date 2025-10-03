@@ -657,13 +657,13 @@
             },
             data: JSON.stringify({
               fields: {
-                'Name': projectId || 'No Project ID',
+                'Order ID': projectId || 'No Project ID',
                 'Customer': customerName || 'Unknown',
-                'Comment': comment.text,
-                'X': comment.position ? comment.position.x.toFixed(2) : '0',
-                'Y': comment.position ? comment.position.y.toFixed(2) : '0',
-                'Date': comment.timestamp,
-                'Marker': comment.id
+                'Feedback': comment.text,
+                'X Position': comment.position ? comment.position.x.toFixed(2) : '0',
+                'Y Position': comment.position ? comment.position.y.toFixed(2) : '0',
+                'Created': comment.timestamp,
+                'Marker ID': comment.id
               }
             })
           });
@@ -750,13 +750,13 @@
                   },
                   data: JSON.stringify({
                     fields: {
-                      'Name': projectId || 'No Project ID',
+                      'Order ID': projectId || 'No Project ID',
                       'Customer': customerName || 'Unknown',
-                      'Screenshot': [{
+                      'Annotated Design': [{
                         url: base64data
                       }],
-                      'Total': comments.length,
-                      'Date': new Date().toLocaleString()
+                      'Total Comments': comments.length,
+                      'Created': new Date().toLocaleString()
                     }
                   })
                 });
