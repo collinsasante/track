@@ -800,29 +800,37 @@
 
           // 5. Save ONE record to Airtable with all comments and image
           console.log('Saving feedback to Airtable...');
-          await $.ajax({
+          console.log('Image URL:', imageUrl);
+          console.log('All comments:', allComments);
+
+          const airtablePayload = {
+            fields: {
+              'Order ID': projectId || 'No Project ID',
+              'Customer': customerName || 'Unknown',
+              'Feedback': allComments,
+              'Annotated Design': [{
+                url: imageUrl
+              }],
+              'Total Comments': comments.length,
+              'Created': new Date().toLocaleString()
+            }
+          };
+
+          console.log('Airtable payload:', JSON.stringify(airtablePayload, null, 2));
+
+          const airtableResponse = await $.ajax({
             url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${window.CONFIG.airtable.apiKey}`,
               'Content-Type': 'application/json'
             },
-            data: JSON.stringify({
-              fields: {
-                'Order ID': projectId || 'No Project ID',
-                'Customer': customerName || 'Unknown',
-                'Feedback': allComments,
-                'Annotated Design': [{
-                  url: imageUrl
-                }],
-                'Total Comments': comments.length,
-                'Created': new Date().toLocaleString()
-              }
-            })
+            data: JSON.stringify(airtablePayload)
           });
 
+          console.log('Airtable response:', airtableResponse);
           console.log('All feedback submitted successfully!');
-          alert(`Success! ${comments.length} comments and annotated design submitted to Airtable.`);
+          alert(`Success! ${comments.length} comments and annotated design submitted to Airtable.\n\nImage URL: ${imageUrl}`);
 
           // Hide the submit button
           btn.style.display = 'none';
