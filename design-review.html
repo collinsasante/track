@@ -133,6 +133,48 @@
         transform: translate(-50%, -50%) scale(1.15);
       }
 
+      .comment-label {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        max-width: 200px;
+        word-wrap: break-word;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+        z-index: 10;
+        line-height: 1.4;
+      }
+
+      .comment-label::before {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-style: solid;
+      }
+
+      /* Arrow pointing left (label on right of marker) */
+      .comment-label.right::before {
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-width: 8px 8px 8px 0;
+        border-color: transparent rgba(0, 0, 0, 0.85) transparent transparent;
+      }
+
+      /* Arrow pointing right (label on left of marker) */
+      .comment-label.left::before {
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-width: 8px 0 8px 8px;
+        border-color: transparent transparent transparent rgba(0, 0, 0, 0.85);
+      }
+
       .comments-panel h2 {
         font-size: 26px;
         font-weight: 700;
@@ -646,6 +688,30 @@
         });
 
         imageContainer.appendChild(marker);
+
+        // Add comment label next to marker
+        const label = document.createElement("div");
+        label.className = "comment-label";
+        label.textContent = comment.text;
+
+        // Position label to the right or left of marker depending on space
+        const markerX = comment.position.x;
+        if (markerX > 50) {
+          // Marker on right side of image, show label on left
+          label.classList.add("left");
+          label.style.right = (100 - markerX) + "%";
+          label.style.left = "auto";
+          label.style.marginRight = "35px";
+        } else {
+          // Marker on left side of image, show label on right
+          label.classList.add("right");
+          label.style.left = markerX + "%";
+          label.style.marginLeft = "35px";
+        }
+        label.style.top = comment.position.y + "%";
+        label.style.transform = "translateY(-50%)";
+
+        imageContainer.appendChild(label);
       }
 
       /**
