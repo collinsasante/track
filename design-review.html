@@ -630,60 +630,6 @@
         }
       });
 
-      // Save feedback to Airtable
-      async function saveToAirtable(comment) {
-        if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
-          alert('Configuration error. Please contact support.');
-          return false;
-        }
-
-        try {
-          const response = await $.ajax({
-            url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}`,
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${window.CONFIG.airtable.apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            data: JSON.stringify({
-              fields: {
-                'Order ID': projectId || 'No Project ID',
-                'Customer': customerName || 'Unknown',
-                'Feedback': comment.text,
-                'X Position': comment.position ? parseFloat(comment.position.x.toFixed(2)) : 0,
-                'Y Position': comment.position ? parseFloat(comment.position.y.toFixed(2)) : 0,
-                'Created': comment.timestamp,
-                'Marker ID': comment.id
-              }
-            })
-          });
-          return true;
-        } catch (error) {
-          console.error('Error saving to Airtable:', error);
-          console.error('Error details:', error.responseJSON || error.responseText);
-
-          // Log the actual error message from Airtable
-          if (error.responseJSON && error.responseJSON.error) {
-            console.error('Airtable error:', error.responseJSON.error);
-            console.error('Error type:', error.responseJSON.error.type);
-            console.error('Error message:', error.responseJSON.error.message);
-          }
-
-          let errorMsg = 'Error saving feedback. ';
-          if (error.status === 422) {
-            if (error.responseJSON && error.responseJSON.error) {
-              errorMsg += error.responseJSON.error.message;
-            } else {
-              errorMsg += 'The "Design Feedback" table may not exist or fields are incorrect. Check console for details.';
-            }
-          } else {
-            errorMsg += 'Please try again or contact support.';
-          }
-
-          alert(errorMsg);
-          return false;
-        }
-      }
 
       function addMarker(comment) {
         const marker = document.createElement("div");
@@ -826,35 +772,34 @@
           // 2. Convert to blob
           const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 
-          // 3. Upload to imgur
-          console.log('Uploading to imgur...');
+          // 3. Upload to Cloudinary
+          console.log('Uploading to Cloudinary...');
           const formData = new FormData();
-          formData.append('image', blob);
+          formData.append('file', blob);
+          formData.append('upload_preset', 'ml_default'); // Cloudinary unsigned preset
+          formData.append('cloud_name', 'dqw8rkxcd'); // Your Cloudinary cloud name
 
-          const imgurResponse = await fetch('https://api.imgur.com/3/image', {
+          const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dqw8rkxcd/image/upload', {
             method: 'POST',
-            headers: {
-              'Authorization': 'Client-ID 546c25a59c58ad7' // Public Imgur client ID
-            },
             body: formData
           });
 
-          const imgurData = await imgurResponse.json();
+          const cloudinaryData = await cloudinaryResponse.json();
 
-          if (!imgurData.success) {
-            throw new Error('Failed to upload image to Imgur');
+          if (cloudinaryData.error) {
+            throw new Error('Failed to upload image to Cloudinary: ' + cloudinaryData.error.message);
           }
 
-          const imageUrl = imgurData.data.link;
+          const imageUrl = cloudinaryData.secure_url;
           console.log('Image uploaded successfully:', imageUrl);
 
-          // 4. Save all comments to Airtable
-          console.log('Saving feedback to Airtable...');
-          for (const comment of comments) {
-            await saveToAirtable(comment);
-          }
+          // 4. Combine all comments into one formatted string
+          const allComments = comments.map((c, index) =>
+            `[${index + 1}] ${c.text} (Position: ${c.position.x.toFixed(1)}, ${c.position.y.toFixed(1)})`
+          ).join('\n\n');
 
-          // 5. Save annotated design record with image URL
+          // 5. Save ONE record to Airtable with all comments and image
+          console.log('Saving feedback to Airtable...');
           await $.ajax({
             url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
             method: 'POST',
@@ -866,7 +811,7 @@
               fields: {
                 'Order ID': projectId || 'No Project ID',
                 'Customer': customerName || 'Unknown',
-                'Feedback': `ANNOTATED DESIGN - ${comments.length} comments`,
+                'Feedback': allComments,
                 'Annotated Design': [{
                   url: imageUrl
                 }],
@@ -884,7 +829,7 @@
 
         } catch (error) {
           console.error('Error submitting feedback:', error);
-          alert('Error submitting feedback. Please try again or contact support.');
+          alert('Error submitting feedback: ' + (error.message || 'Please try again or contact support.'));
           btn.innerHTML = originalText;
           btn.disabled = false;
         }

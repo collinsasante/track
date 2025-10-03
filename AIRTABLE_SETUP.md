@@ -12,15 +12,14 @@ In your Airtable base, create a new table called **"Design Feedback"** with thes
 |------------|------------|-------------|
 | **Order ID** | Single line text | The order ID (e.g., "ORD-5CtOu") |
 | **Customer** | Single line text | Name of the customer |
-| **Feedback** | Long text | The comment/feedback text |
-| **X Position** | Number | X coordinate (0-100) |
-| **Y Position** | Number | Y coordinate (0-100) |
-| **Marker ID** | Number | The marker ID (1, 2, 3...) |
-| **Created** | Single line text | When submitted |
-| **Annotated Design** | Attachment | Screenshot with markers |
+| **Feedback** | Long text | ALL comments combined (one per line with positions) |
+| **Annotated Design** | Attachment | Screenshot with ALL markers overlaid |
 | **Total Comments** | Number | Count of markers |
+| **Created** | Single line text | When submitted |
 
 **Note:** Create these fields exactly as shown (case-sensitive).
+
+**Important:** Each submission creates ONE record with all feedback combined, not multiple records!
 
 ### Quick Setup Steps:
 
@@ -30,26 +29,29 @@ In your Airtable base, create a new table called **"Design Feedback"** with thes
 4. Click **"+"** to add these fields (exact names, case-sensitive):
    - **Order ID** (Single line text)
    - **Customer** (Single line text)
-   - **Feedback** (Long text)
-   - **X Position** (Number - Decimal, 2 places)
-   - **Y Position** (Number - Decimal, 2 places)
-   - **Marker ID** (Number - Integer)
-   - **Created** (Single line text)
-   - **Annotated Design** (Attachment) ← Important!
+   - **Feedback** (Long text) ← ALL comments will be here
+   - **Annotated Design** (Attachment) ← Screenshot with markers
    - **Total Comments** (Number - Integer)
+   - **Created** (Single line text or Date)
 
 ## Field Settings:
 
-- **X Position** and **Y Position**: Format as "Decimal" with 2 decimal places
-- **Marker ID** and **Total Comments**: Format as "Integer"
+- **Feedback**: Long text field - will contain all comments formatted like:
+  ```
+  [1] Change the color to blue (Position: 45.2, 32.1)
+
+  [2] Make logo bigger (Position: 78.5, 12.3)
+  ```
+- **Total Comments**: Format as "Integer"
 - **Created**: Can also be "Date" field type if preferred
-- **Annotated Design**: MUST be "Attachment" type to receive images
+- **Annotated Design**: MUST be "Attachment" type to receive images from Cloudinary
 
 ## Testing:
 
 After creating the table, try submitting feedback on the design review page. You should see:
-- Individual comments saved as records
-- An annotated design screenshot uploaded after each comment
+- ONE record per submission
+- All comments combined in the "Feedback" field
+- Annotated design screenshot attached (uploaded via Cloudinary)
 
 ## Troubleshooting:
 
