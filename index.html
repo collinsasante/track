@@ -789,11 +789,14 @@
       function displayOrderDetails(record, orderId, designUrl) {
         const fields = record.fields;
 
+        // orderId comes without ORD- prefix (e.g., "3JPZG"), so we need to add it
+        const fullOrderId = `ORD-${orderId}`;
+
         // Build review URL - use origin instead of removing last segment
         const baseUrl = window.location.origin;
         // Use lookup fields from Project Information
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
-        const reviewUrl = `${baseUrl}/design-review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
+        const reviewUrl = `${baseUrl}/design-review.html?project=${fullOrderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
         // If it's a direct link, redirect immediately to Design Review
         if (isDirectLinkAccess) {
@@ -808,7 +811,7 @@
         const detailsHtml = `
                 <div class="detail-row">
                     <span class="detail-label">Order ID:</span>
-                    <span class="detail-value">ORD-${orderId}</span>
+                    <span class="detail-value">${fullOrderId}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Customer:</span>
