@@ -894,7 +894,34 @@
 
             const imageUrl = cloudinaryData.secure_url;
 
-            // 4. Combine all comments into one formatted string
+            // 4. Find the matching Design Draft record by Order Number
+            let designDraftRecordId = null;
+            if (projectId) {
+              try {
+                const designDraftFormula = `{Order Number}='${projectId}'`;
+                const designDraftResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                  },
+                  data: {
+                    filterByFormula: designDraftFormula,
+                    maxRecords: 1
+                  }
+                });
+
+                if (designDraftResponse.records && designDraftResponse.records.length > 0) {
+                  designDraftRecordId = designDraftResponse.records[0].id;
+                  console.log("Found matching Design Draft record:", designDraftRecordId);
+                }
+              } catch (err) {
+                console.warn("Could not find Design Draft record:", err);
+                // Continue anyway - not critical
+              }
+            }
+
+            // 5. Combine all comments into one formatted string
             const allComments = comments
               .map(
                 (c, index) =>
@@ -902,7 +929,7 @@
               )
               .join("\n\n");
 
-            // 5. Save ONE record to Airtable with all comments and image
+            // 6. Save ONE record to Airtable with all comments and image
             const airtablePayload = {
               fields: {
                 "Order ID": projectId || "No Project ID",
@@ -917,6 +944,11 @@
                 Created: new Date().toLocaleString(),
               },
             };
+
+            // Add the linked Design Draft record if found
+            if (designDraftRecordId) {
+              airtablePayload.fields["Related Design Draft"] = [designDraftRecordId];
+            }
 
             const airtableResponse = await $.ajax({
               url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
