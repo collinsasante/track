@@ -537,18 +537,12 @@
 
         // Check for #ORD-XXXXX or #XXXXX in hash (client-side routing - most reliable)
         if (hash) {
-          let orderId = hash.substring(1).toUpperCase(); // Remove the # character
+          let orderId = hash.substring(1); // Remove the # character
 
-          // Add ORD- prefix if not present
-          if (!orderId.startsWith('ORD-')) {
+          // If it already starts with ORD-, use as-is
+          // Otherwise, add ORD- prefix
+          if (!orderId.toUpperCase().startsWith('ORD-')) {
             orderId = `ORD-${orderId}`;
-          }
-
-          // Extract numeric part and format to 5 digits
-          const numericPart = orderId.substring(4);
-          if (/^\d+$/.test(numericPart)) {
-            const formattedId = numericPart.padStart(5, '0');
-            orderId = `ORD-${formattedId}`;
           }
 
           isDirectLinkAccess = true;
@@ -567,7 +561,7 @@
         }
         // Check for ?order= parameter (from _redirects or direct link)
         else if (urlParams.get('order')) {
-          let orderId = urlParams.get('order').toUpperCase();
+          let orderId = urlParams.get('order');
           isDirectLinkAccess = true;
 
           // Show full-screen loading overlay
@@ -577,17 +571,9 @@
           }
 
           // Add ORD- prefix if not present
-          if (!orderId.startsWith('ORD-')) {
+          if (!orderId.toUpperCase().startsWith('ORD-')) {
             orderId = `ORD-${orderId}`;
           }
-
-          // Extract numeric part and format to 5 digits
-          const numericPart = orderId.substring(4);
-          if (/^\d+$/.test(numericPart)) {
-            const formattedId = numericPart.padStart(5, '0');
-            orderId = `ORD-${formattedId}`;
-          }
-
           document.getElementById("orderId").value = orderId;
           // Auto-submit the form
           setTimeout(() => {
@@ -599,7 +585,7 @@
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        let orderId = document.getElementById("orderId").value.trim().toUpperCase();
+        const orderId = document.getElementById("orderId").value.trim();
 
         // Validate Order ID is not empty
         if (!orderId) {
@@ -607,9 +593,10 @@
           return;
         }
 
-        // Add ORD- prefix if not present
-        if (!orderId.startsWith("ORD-")) {
-          orderId = "ORD-" + orderId;
+        // Validate Order ID format
+        if (!orderId.toUpperCase().startsWith("ORD-")) {
+          showError('Please enter a valid Order ID starting with "ORD-"');
+          return;
         }
 
         // Validate configuration is loaded
@@ -618,18 +605,8 @@
           return;
         }
 
-        // Extract the numeric part and format to 5 digits with leading zeros
-        const numericPart = orderId.substring(4); // Remove "ORD-"
-
-        // Validate numeric part is a number
-        if (!/^\d+$/.test(numericPart)) {
-          showError('Please enter a valid Order ID (e.g., ORD-00001, ORD-123, or just 123)');
-          return;
-        }
-
-        // Format to 5 digits with leading zeros (matching Airtable formula)
-        const formattedId = numericPart.padStart(5, '0');
-        const formattedOrderId = `ORD-${formattedId}`;
+        // Extract the actual ID (remove ORD- prefix)
+        const actualId = orderId.substring(4); // Remove "ORD-"
 
         // Show loading
         hideAll();
@@ -637,7 +614,7 @@
         trackBtn.disabled = true;
 
         try {
-          await findOrder(formattedOrderId);
+          await findOrder(actualId);
         } catch (error) {
           console.error("Error:", error);
           showError("An error occurred while searching. Please try again.");
@@ -647,31 +624,52 @@
         }
       });
 
-      async function findOrder(formattedOrderId) {
+      async function findOrder(orderId) {
         if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
           showError("Configuration error. Please contact support.");
           return;
         }
 
         try {
-          // Search by Order Number field using exact match to formatted ID
-          const formula = `{Order Number}='${formattedOrderId}'`;
-
-          const response = await $.ajax({
-            url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}`,
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
-            },
-            data: {
-              filterByFormula: formula,
-              maxRecords: 1
-            }
-          });
-
+          // Try to find by record ID first
           let record = null;
-          if (response.records && response.records.length > 0) {
-            record = response.records[0];
+
+          // If it looks like a record ID (starts with rec)
+          if (orderId.startsWith("rec")) {
+            try {
+              const response = await $.ajax({
+                url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}/${orderId}`,
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                },
+              });
+              record = response;
+            } catch (err) {
+              // Record not found, will try formula search
+            }
+          }
+
+          // If not found, search by Order Number field using filterByFormula
+          if (!record) {
+            const orderIdWithPrefix = `ORD-${orderId}`;
+            const formula = `OR({Order Number}='${orderIdWithPrefix}', {Order Number}='${orderId}')`;
+
+            const response = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/${window.CONFIG.airtable.tableId}`,
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+              },
+              data: {
+                filterByFormula: formula,
+                maxRecords: 1
+              }
+            });
+
+            if (response.records && response.records.length > 0) {
+              record = response.records[0];
+            }
           }
 
           if (record && record.fields) {
@@ -774,7 +772,7 @@
               }
             }
 
-            displayOrderDetails(record, formattedOrderId, designUrl);
+            displayOrderDetails(record, orderId, designUrl);
           } else {
             showError(
               "Order not found. Please check your Order ID and try again."
@@ -788,14 +786,14 @@
         }
       }
 
-      function displayOrderDetails(record, formattedOrderId, designUrl) {
+      function displayOrderDetails(record, orderId, designUrl) {
         const fields = record.fields;
 
         // Build review URL - use origin instead of removing last segment
         const baseUrl = window.location.origin;
         // Use lookup fields from Project Information
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
-        const reviewUrl = `${baseUrl}/design-review.html?project=${formattedOrderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
+        const reviewUrl = `${baseUrl}/design-review.html?project=ORD-${orderId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
         // If it's a direct link, redirect immediately to Design Review
         if (isDirectLinkAccess) {
@@ -810,7 +808,7 @@
         const detailsHtml = `
                 <div class="detail-row">
                     <span class="detail-label">Order ID:</span>
-                    <span class="detail-value">${formattedOrderId}</span>
+                    <span class="detail-value">ORD-${orderId}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Customer:</span>
