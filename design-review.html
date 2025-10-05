@@ -600,6 +600,8 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script>
       let comments = [];
       let commentCounter = 0;
@@ -629,6 +631,19 @@
         return results === null
           ? ""
           : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      // Convert Google Drive sharing link to direct image URL
+      function convertGoogleDriveUrl(url) {
+        if (!url) return null;
+        if (url.includes('drive.google.com')) {
+          const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (fileIdMatch) {
+            const fileId = fileIdMatch[1];
+            return `https://drive.google.com/uc?export=view&id=${fileId}`;
+          }
+        }
+        return url;
       }
 
       // Load project details from URL and fetch all revisions
@@ -668,10 +683,12 @@
             if (response.records && response.records.length > 0) {
               const fields = response.records[0].fields;
 
-              // Load all revision URLs
-              revisionUrls[1] = fields["Project File Link (Rev 1.0)"] || null;
-              revisionUrls[2] = fields["Project File Link (Rev 1.1)"] || null;
-              revisionUrls[3] = fields["Project File Link (Rev 1.2)"] || null;
+              // Load all revision URLs and convert Google Drive links
+              revisionUrls[1] = convertGoogleDriveUrl(fields["Project File Link (Rev 1.0)"]) || null;
+              revisionUrls[2] = convertGoogleDriveUrl(fields["Project File Link (Rev 1.1)"]) || null;
+              revisionUrls[3] = convertGoogleDriveUrl(fields["Project File Link (Rev 1.2)"]) || null;
+
+              console.log("Revision URLs:", revisionUrls);
 
               // Find the latest available revision (highest number with URL)
               for (let i = 3; i >= 1; i--) {
