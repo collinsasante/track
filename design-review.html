@@ -410,6 +410,13 @@
       <div class="logo">
         <img src="assets/images/logo.png" alt="Logo" />
       </div>
+      <button
+        id="downloadFilesBtn"
+        class="btn-primary"
+        style="background: #28a745; padding: 12px 24px; margin-left: auto"
+      >
+        <i class="fas fa-download"></i> Download All Design Files
+      </button>
     </div>
 
     <div class="container">
@@ -493,14 +500,6 @@
             style="display: none; margin-top: 20px"
           >
             <i class="fas fa-paper-plane"></i> Submit All Feedback
-          </button>
-
-          <button
-            id="downloadFilesBtn"
-            class="btn-primary"
-            style="margin-top: 15px; background: #28a745"
-          >
-            <i class="fas fa-download"></i> Download All Design Files
           </button>
         </div>
       </div>
@@ -913,7 +912,10 @@
                 // The lookup field "Order Number (from Project Information)" contains the Order Number
                 const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
 
-                console.log("Searching for Design Draft with formula:", designDraftFormula);
+                console.log(
+                  "Searching for Design Draft with formula:",
+                  designDraftFormula
+                );
                 console.log("Order Number:", projectId);
 
                 const designDraftResponse = await $.ajax({
@@ -928,7 +930,10 @@
                   },
                 });
 
-                console.log("Design Draft search response:", designDraftResponse);
+                console.log(
+                  "Design Draft search response:",
+                  designDraftResponse
+                );
 
                 if (
                   designDraftResponse.records &&
@@ -940,22 +945,24 @@
                     designDraftRecordId
                   );
                 } else {
-                  console.error(
-                    "No Design Draft found for order:",
-                    projectId
-                  );
+                  console.error("No Design Draft found for order:", projectId);
                   throw new Error(
                     `No Design Draft found for this order (${projectId}). Please ensure a Design Draft exists with the Project Information field linked to this submission.`
                   );
                 }
               } catch (err) {
                 console.error("Error finding Design Draft record:", err);
-                if (err.message && err.message.includes("No Design Draft found")) {
+                if (
+                  err.message &&
+                  err.message.includes("No Design Draft found")
+                ) {
                   throw err;
                 }
                 throw new Error(
                   "Could not search for Design Draft record. " +
-                    (err.responseJSON?.error?.message || err.message || "Please contact support.")
+                    (err.responseJSON?.error?.message ||
+                      err.message ||
+                      "Please contact support.")
                 );
               }
             } else {
@@ -1025,118 +1032,134 @@
         });
 
       // Download all design files
-      document.getElementById("downloadFilesBtn").addEventListener("click", async function() {
-        const btn = this;
-        const originalText = btn.innerHTML;
+      document
+        .getElementById("downloadFilesBtn")
+        .addEventListener("click", async function () {
+          const btn = this;
+          const originalText = btn.innerHTML;
 
-        if (!projectId) {
-          alert("No project information available.");
-          return;
-        }
-
-        // Validate configuration is loaded
-        if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
-          alert("Application configuration not loaded. Please refresh the page and try again.");
-          return;
-        }
-
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching design files...';
-        btn.disabled = true;
-
-        try {
-          // Find the Design Draft record
-          const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
-
-          const designDraftResponse = await $.ajax({
-            url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
-            },
-            data: {
-              filterByFormula: designDraftFormula,
-              maxRecords: 1,
-            },
-          });
-
-          if (!designDraftResponse.records || designDraftResponse.records.length === 0) {
-            throw new Error("No design files found for this order.");
+          if (!projectId) {
+            alert("No project information available.");
+            return;
           }
 
-          const record = designDraftResponse.records[0];
-          const fields = record.fields;
+          // Validate configuration is loaded
+          if (
+            !window.CONFIG.airtable.baseId ||
+            !window.CONFIG.airtable.apiKey
+          ) {
+            alert(
+              "Application configuration not loaded. Please refresh the page and try again."
+            );
+            return;
+          }
 
-          // Collect all design files from various fields
-          const designFiles = [];
+          btn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Fetching design files...';
+          btn.disabled = true;
 
-          // Check for Design Draft 1, Revision 1, 2, 3, etc.
-          const fileFields = [
-            "Design Draft 1",
-            "Revision 1",
-            "Revision 2",
-            "Revision 3",
-            "Annotated Design"
-          ];
+          try {
+            // Find the Design Draft record
+            const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
 
-          fileFields.forEach(fieldName => {
-            if (fields[fieldName] && Array.isArray(fields[fieldName])) {
-              fields[fieldName].forEach(file => {
-                if (file.url) {
-                  designFiles.push({
-                    name: file.filename || `${fieldName}.${file.type?.split('/')[1] || 'file'}`,
-                    url: file.url
-                  });
-                }
-              });
+            const designDraftResponse = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+              },
+              data: {
+                filterByFormula: designDraftFormula,
+                maxRecords: 1,
+              },
+            });
+
+            if (
+              !designDraftResponse.records ||
+              designDraftResponse.records.length === 0
+            ) {
+              throw new Error("No design files found for this order.");
             }
-          });
 
-          if (designFiles.length === 0) {
-            throw new Error("No design files available to download.");
-          }
+            const record = designDraftResponse.records[0];
+            const fields = record.fields;
 
-          btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Downloading ${designFiles.length} file(s)...`;
+            // Collect all design files from various fields
+            const designFiles = [];
 
-          // Download each file
-          for (let i = 0; i < designFiles.length; i++) {
-            const file = designFiles[i];
+            // Check for Design Draft 1, Revision 1, 2, 3, etc.
+            const fileFields = [
+              "Design Draft 1",
+              "Revision 1",
+              "Revision 2",
+              "Revision 3",
+              "Annotated Design",
+            ];
 
-            // Create a temporary link and trigger download
-            const link = document.createElement('a');
-            link.href = file.url;
-            link.download = file.name;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            fileFields.forEach((fieldName) => {
+              if (fields[fieldName] && Array.isArray(fields[fieldName])) {
+                fields[fieldName].forEach((file) => {
+                  if (file.url) {
+                    designFiles.push({
+                      name:
+                        file.filename ||
+                        `${fieldName}.${file.type?.split("/")[1] || "file"}`,
+                      url: file.url,
+                    });
+                  }
+                });
+              }
+            });
 
-            // Small delay between downloads to avoid browser blocking
-            if (i < designFiles.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 500));
+            if (designFiles.length === 0) {
+              throw new Error("No design files available to download.");
             }
+
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Downloading ${designFiles.length} file(s)...`;
+
+            // Download each file
+            for (let i = 0; i < designFiles.length; i++) {
+              const file = designFiles[i];
+
+              // Create a temporary link and trigger download
+              const link = document.createElement("a");
+              link.href = file.url;
+              link.download = file.name;
+              link.target = "_blank";
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+
+              // Small delay between downloads to avoid browser blocking
+              if (i < designFiles.length - 1) {
+                await new Promise((resolve) => setTimeout(resolve, 500));
+              }
+            }
+
+            alert(
+              `Successfully started download of ${designFiles.length} design file(s)!`
+            );
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          } catch (error) {
+            console.error("Error downloading files:", error);
+
+            let errorMessage = "Failed to download design files. ";
+            if (error.responseJSON && error.responseJSON.error) {
+              errorMessage +=
+                error.responseJSON.error.message ||
+                error.responseJSON.error.type;
+            } else if (error.message) {
+              errorMessage += error.message;
+            } else {
+              errorMessage += "Please try again or contact support.";
+            }
+
+            alert(errorMessage);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
           }
-
-          alert(`Successfully started download of ${designFiles.length} design file(s)!`);
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-
-        } catch (error) {
-          console.error("Error downloading files:", error);
-
-          let errorMessage = "Failed to download design files. ";
-          if (error.responseJSON && error.responseJSON.error) {
-            errorMessage += error.responseJSON.error.message || error.responseJSON.error.type;
-          } else if (error.message) {
-            errorMessage += error.message;
-          } else {
-            errorMessage += "Please try again or contact support.";
-          }
-
-          alert(errorMessage);
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }
-      });
+        });
 
       // Initialize
       loadProjectDetails();
