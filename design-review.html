@@ -529,19 +529,27 @@
 
       <div class="review-grid">
         <div class="design-viewer">
-          <div class="revision-tabs" id="revisionTabs" style="display: none; margin-bottom: 20px;">
+          <div
+            class="revision-tabs"
+            id="revisionTabs"
+            style="display: none; margin-bottom: 20px"
+          >
             <button class="revision-tab active" data-revision="1">
-              <i class="fas fa-image"></i> Revision 1
+              <i class="fas fa-image"></i> Design 1
             </button>
             <button class="revision-tab" data-revision="2">
-              <i class="fas fa-image"></i> Revision 2
+              <i class="fas fa-image"></i> Design 2
             </button>
             <button class="revision-tab" data-revision="3">
-              <i class="fas fa-image"></i> Revision 3
+              <i class="fas fa-image"></i> Design 3
             </button>
           </div>
           <div class="design-image-container" id="imageContainer">
-            <button class="design-nav-btn prev" id="prevDesignBtn" style="display: none;">
+            <button
+              class="design-nav-btn prev"
+              id="prevDesignBtn"
+              style="display: none"
+            >
               <i class="fas fa-chevron-left"></i>
             </button>
             <img
@@ -550,10 +558,20 @@
               class="design-image"
               id="designImage"
             />
-            <button class="design-nav-btn next" id="nextDesignBtn" style="display: none;">
+            <button
+              class="design-nav-btn next"
+              id="nextDesignBtn"
+              style="display: none"
+            >
               <i class="fas fa-chevron-right"></i>
             </button>
-            <div class="design-counter" id="designCounter" style="display: none;">1 / 1</div>
+            <div
+              class="design-counter"
+              id="designCounter"
+              style="display: none"
+            >
+              1 / 1
+            </div>
           </div>
         </div>
 
@@ -675,7 +693,7 @@
       let revisionUrls = {
         1: [], // Array of design URLs for revision 1
         2: [], // Array of design URLs for revision 2
-        3: []  // Array of design URLs for revision 3
+        3: [], // Array of design URLs for revision 3
       };
       let currentDesignIndex = 0; // Track which design in the current revision is displayed
 
@@ -698,7 +716,7 @@
       // Convert Google Drive sharing link to direct image URL
       function convertGoogleDriveUrl(url) {
         if (!url) return null;
-        if (url.includes('drive.google.com')) {
+        if (url.includes("drive.google.com")) {
           const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
           if (fileIdMatch) {
             const fileId = fileIdMatch[1];
@@ -736,7 +754,11 @@
         console.log("  baseId:", window.CONFIG.airtable.baseId);
         console.log("  apiKey exists:", !!window.CONFIG.airtable.apiKey);
 
-        if (projectId && window.CONFIG.airtable.baseId && window.CONFIG.airtable.apiKey) {
+        if (
+          projectId &&
+          window.CONFIG.airtable.baseId &&
+          window.CONFIG.airtable.apiKey
+        ) {
           console.log("=== FETCHING DESIGN DRAFTS ===");
           try {
             const formula = `{Order Number (from Project Information)}='${projectId}'`;
@@ -765,7 +787,7 @@
               const projectFileLinks = [
                 { field: "Project File Link (Rev 1.0)", revision: 1 },
                 { field: "Project File Link (Rev 1.1)", revision: 2 },
-                { field: "Project File Link (Rev 1.2)", revision: 3 }
+                { field: "Project File Link (Rev 1.2)", revision: 3 },
               ];
 
               projectFileLinks.forEach(({ field, revision }) => {
@@ -779,17 +801,22 @@
               const designDraftFields = [
                 { field: "Revision 1", revision: 1 },
                 { field: "Revision 2", revision: 2 },
-                { field: "Revision 3", revision: 3 }
+                { field: "Revision 3", revision: 3 },
               ];
 
               designDraftFields.forEach(({ field, revision }) => {
                 console.log(`Checking field: ${field}`, fields[field]);
                 if (fields[field] && Array.isArray(fields[field])) {
-                  console.log(`${field} is an array with ${fields[field].length} items`);
+                  console.log(
+                    `${field} is an array with ${fields[field].length} items`
+                  );
                   fields[field].forEach((attachment, idx) => {
                     console.log(`${field}[${idx}]:`, attachment);
                     if (attachment.url) {
-                      console.log(`Adding URL to revision ${revision}:`, attachment.url);
+                      console.log(
+                        `Adding URL to revision ${revision}:`,
+                        attachment.url
+                      );
                       revisionUrls[revision].push(attachment.url);
                     }
                   });
@@ -809,12 +836,14 @@
               }
 
               // Show revision tabs if there are multiple revisions
-              const availableRevisions = Object.values(revisionUrls).filter(urls => urls.length > 0).length;
+              const availableRevisions = Object.values(revisionUrls).filter(
+                (urls) => urls.length > 0
+              ).length;
               if (availableRevisions > 1) {
                 document.getElementById("revisionTabs").style.display = "flex";
 
                 // Disable tabs for unavailable revisions
-                document.querySelectorAll(".revision-tab").forEach(tab => {
+                document.querySelectorAll(".revision-tab").forEach((tab) => {
                   const rev = parseInt(tab.getAttribute("data-revision"));
                   if (revisionUrls[rev].length === 0) {
                     tab.disabled = true;
@@ -858,7 +887,7 @@
         currentDesignIndex = 0; // Reset to first design
 
         // Update active tab
-        document.querySelectorAll(".revision-tab").forEach(tab => {
+        document.querySelectorAll(".revision-tab").forEach((tab) => {
           tab.classList.remove("active");
           if (parseInt(tab.getAttribute("data-revision")) === revision) {
             tab.classList.add("active");
@@ -941,13 +970,15 @@
         displayComments();
 
         // Remove all markers
-        document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+        document
+          .querySelectorAll(".comment-marker, .comment-label")
+          .forEach((el) => el.remove());
       }
 
       // Handle revision tab clicks and navigation button clicks
-      document.addEventListener("DOMContentLoaded", function() {
-        document.querySelectorAll(".revision-tab").forEach(tab => {
-          tab.addEventListener("click", function() {
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".revision-tab").forEach((tab) => {
+          tab.addEventListener("click", function () {
             const revision = parseInt(this.getAttribute("data-revision"));
             if (revisionUrls[revision] && revisionUrls[revision].length > 0) {
               loadRevisionImage(revision);
@@ -956,8 +987,12 @@
         });
 
         // Navigation button handlers
-        document.getElementById("prevDesignBtn").addEventListener("click", prevDesign);
-        document.getElementById("nextDesignBtn").addEventListener("click", nextDesign);
+        document
+          .getElementById("prevDesignBtn")
+          .addEventListener("click", prevDesign);
+        document
+          .getElementById("nextDesignBtn")
+          .addEventListener("click", nextDesign);
       });
 
       // Click on design to add comment
@@ -1459,10 +1494,10 @@
             ];
 
             urlFields.forEach((fieldName, index) => {
-              if (fields[fieldName] && typeof fields[fieldName] === 'string') {
+              if (fields[fieldName] && typeof fields[fieldName] === "string") {
                 designFiles.push({
                   name: `Revision_${index + 1}.png`,
-                  url: fields[fieldName]
+                  url: fields[fieldName],
                 });
               }
             });
