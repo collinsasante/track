@@ -711,6 +711,10 @@
         submissionRecordId = getUrlParameter("submissionId");
         customerName = getUrlParameter("customer");
 
+        console.log("=== LOADING PROJECT DETAILS ===");
+        console.log("Project ID:", projectId);
+        console.log("Customer:", customerName);
+
         if (projectId) {
           document.getElementById("projectInfo").innerHTML =
             `Project ID: <strong>${escapeHtml(projectId)}</strong>${customerName ? ` | Customer: <strong>${escapeHtml(customerName)}</strong>` : ""}<br>` +
@@ -725,8 +729,11 @@
 
         // Fetch all revision URLs from Design Drafts
         if (projectId && window.CONFIG.airtable.baseId && window.CONFIG.airtable.apiKey) {
+          console.log("=== FETCHING DESIGN DRAFTS ===");
           try {
             const formula = `{Order Number (from Project Information)}='${projectId}'`;
+            console.log("Search formula:", formula);
+
             const response = await $.ajax({
               url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
               method: "GET",
@@ -739,8 +746,11 @@
               },
             });
 
+            console.log("Airtable response:", response);
+
             if (response.records && response.records.length > 0) {
               const fields = response.records[0].fields;
+              console.log("Design Draft fields:", fields);
 
               // Load all designs for each revision
               // First check Project File Link fields (single URL)
