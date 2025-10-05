@@ -494,6 +494,14 @@
           >
             <i class="fas fa-paper-plane"></i> Submit All Feedback
           </button>
+
+          <button
+            id="downloadFilesBtn"
+            class="btn-primary"
+            style="margin-top: 15px; background: #28a745"
+          >
+            <i class="fas fa-download"></i> Download All Design Files
+          </button>
         </div>
       </div>
     </div>
@@ -549,6 +557,7 @@
       let projectId = null;
       let customerName = null;
       let submissionRecordId = null;
+      let designDraftRecordId = null;
 
       const imageContainer = document.getElementById("imageContainer");
       const designImage = document.getElementById("designImage");
@@ -1014,6 +1023,120 @@
             btn.disabled = false;
           }
         });
+
+      // Download all design files
+      document.getElementById("downloadFilesBtn").addEventListener("click", async function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+
+        if (!projectId) {
+          alert("No project information available.");
+          return;
+        }
+
+        // Validate configuration is loaded
+        if (!window.CONFIG.airtable.baseId || !window.CONFIG.airtable.apiKey) {
+          alert("Application configuration not loaded. Please refresh the page and try again.");
+          return;
+        }
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching design files...';
+        btn.disabled = true;
+
+        try {
+          // Find the Design Draft record
+          const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
+
+          const designDraftResponse = await $.ajax({
+            url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+            },
+            data: {
+              filterByFormula: designDraftFormula,
+              maxRecords: 1,
+            },
+          });
+
+          if (!designDraftResponse.records || designDraftResponse.records.length === 0) {
+            throw new Error("No design files found for this order.");
+          }
+
+          const record = designDraftResponse.records[0];
+          const fields = record.fields;
+
+          // Collect all design files from various fields
+          const designFiles = [];
+
+          // Check for Design Draft 1, Revision 1, 2, 3, etc.
+          const fileFields = [
+            "Design Draft 1",
+            "Revision 1",
+            "Revision 2",
+            "Revision 3",
+            "Annotated Design"
+          ];
+
+          fileFields.forEach(fieldName => {
+            if (fields[fieldName] && Array.isArray(fields[fieldName])) {
+              fields[fieldName].forEach(file => {
+                if (file.url) {
+                  designFiles.push({
+                    name: file.filename || `${fieldName}.${file.type?.split('/')[1] || 'file'}`,
+                    url: file.url
+                  });
+                }
+              });
+            }
+          });
+
+          if (designFiles.length === 0) {
+            throw new Error("No design files available to download.");
+          }
+
+          btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Downloading ${designFiles.length} file(s)...`;
+
+          // Download each file
+          for (let i = 0; i < designFiles.length; i++) {
+            const file = designFiles[i];
+
+            // Create a temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = file.url;
+            link.download = file.name;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Small delay between downloads to avoid browser blocking
+            if (i < designFiles.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+
+          alert(`Successfully started download of ${designFiles.length} design file(s)!`);
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+
+        } catch (error) {
+          console.error("Error downloading files:", error);
+
+          let errorMessage = "Failed to download design files. ";
+          if (error.responseJSON && error.responseJSON.error) {
+            errorMessage += error.responseJSON.error.message || error.responseJSON.error.type;
+          } else if (error.message) {
+            errorMessage += error.message;
+          } else {
+            errorMessage += "Please try again or contact support.";
+          }
+
+          alert(errorMessage);
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      });
 
       // Initialize
       loadProjectDetails();
