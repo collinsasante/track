@@ -728,6 +728,11 @@
         }
 
         // Fetch all revision URLs from Design Drafts
+        console.log("Checking conditions:");
+        console.log("  projectId:", projectId);
+        console.log("  baseId:", window.CONFIG.airtable.baseId);
+        console.log("  apiKey exists:", !!window.CONFIG.airtable.apiKey);
+
         if (projectId && window.CONFIG.airtable.baseId && window.CONFIG.airtable.apiKey) {
           console.log("=== FETCHING DESIGN DRAFTS ===");
           try {
