@@ -765,16 +765,22 @@
               ];
 
               designDraftFields.forEach(({ field, revision }) => {
+                console.log(`Checking field: ${field}`, fields[field]);
                 if (fields[field] && Array.isArray(fields[field])) {
-                  fields[field].forEach(attachment => {
+                  console.log(`${field} is an array with ${fields[field].length} items`);
+                  fields[field].forEach((attachment, idx) => {
+                    console.log(`${field}[${idx}]:`, attachment);
                     if (attachment.url) {
+                      console.log(`Adding URL to revision ${revision}:`, attachment.url);
                       revisionUrls[revision].push(attachment.url);
                     }
                   });
+                } else {
+                  console.log(`${field} is not an array or doesn't exist`);
                 }
               });
 
-              console.log("Revision URLs:", revisionUrls);
+              console.log("Final Revision URLs:", revisionUrls);
 
               // Find the latest available revision (highest number with designs)
               for (let i = 3; i >= 1; i--) {
