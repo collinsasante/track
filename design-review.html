@@ -699,10 +699,29 @@
               if (revisionUrls[currentRevision]) {
                 loadRevisionImage(currentRevision);
               }
+            } else {
+              // No Design Draft found, fallback to URL parameter
+              loadFallbackDesign();
             }
           } catch (error) {
             console.error("Error loading revisions:", error);
+            loadFallbackDesign();
           }
+        } else {
+          // Config not loaded yet, fallback to URL parameter
+          loadFallbackDesign();
+        }
+      }
+
+      // Fallback to load design from URL parameter (old behavior)
+      function loadFallbackDesign() {
+        const designUrl = getUrlParameter("design");
+        if (designUrl) {
+          designImage.src = designUrl;
+          designImage.onerror = function () {
+            alert("Error loading design image. Please check the URL.");
+            designImage.src = "assets/images/left-bg.gif";
+          };
         }
       }
 
