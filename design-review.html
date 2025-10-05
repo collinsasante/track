@@ -900,9 +900,9 @@
             let designDraftRecordId = null;
             if (projectId) {
               try {
-                // Search for Design Draft by matching Order Number in the Name field
-                // The Name field contains entries like "Jus Go (ORD-3JPZG)"
-                const designDraftFormula = `SEARCH('${projectId}', {Name})`;
+                // Search for Design Draft by matching Order Number lookup field
+                // The lookup field "Order Number (from Project Information)" contains the Order Number
+                const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
 
                 console.log("Searching for Design Draft with formula:", designDraftFormula);
                 console.log("Order Number:", projectId);
@@ -936,7 +936,7 @@
                     projectId
                   );
                   throw new Error(
-                    `No Design Draft found for this order (${projectId}). Please ensure a Design Draft exists with "${projectId}" in the Name field.`
+                    `No Design Draft found for this order (${projectId}). Please ensure a Design Draft exists with the Project Information field linked to this submission.`
                   );
                 }
               } catch (err) {
