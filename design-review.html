@@ -492,7 +492,7 @@
             class="btn-primary"
             style="display: none; margin-top: 20px"
           >
-            <i class="fas fa-paper-plane"></i> Submit All Feedback to Airtable
+            <i class="fas fa-paper-plane"></i> Submit All Feedback
           </button>
         </div>
       </div>
@@ -901,7 +901,12 @@
             if (submissionRecordId) {
               try {
                 // Search for Design Draft where Project Information links to this submission
-                const designDraftFormula = `FIND('${submissionRecordId}', ARRAYJOIN({Project Information}))`;
+                // Using SEARCH function which is more reliable for linked records
+                const designDraftFormula = `SEARCH('${submissionRecordId}', ARRAYJOIN({Project Information}, ','))`;
+
+                console.log("Searching for Design Draft with formula:", designDraftFormula);
+                console.log("Submission Record ID:", submissionRecordId);
+
                 const designDraftResponse = await $.ajax({
                   url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
                   method: "GET",
@@ -910,19 +915,39 @@
                   },
                   data: {
                     filterByFormula: designDraftFormula,
-                    maxRecords: 1
-                  }
+                    maxRecords: 1,
+                  },
                 });
 
-                if (designDraftResponse.records && designDraftResponse.records.length > 0) {
+                console.log("Design Draft search response:", designDraftResponse);
+
+                if (
+                  designDraftResponse.records &&
+                  designDraftResponse.records.length > 0
+                ) {
                   designDraftRecordId = designDraftResponse.records[0].id;
-                  console.log("Found matching Design Draft record:", designDraftRecordId);
+                  console.log(
+                    "Found matching Design Draft record:",
+                    designDraftRecordId
+                  );
                 } else {
-                  console.warn("No Design Draft found for submission:", submissionRecordId);
+                  console.error(
+                    "No Design Draft found for submission:",
+                    submissionRecordId
+                  );
+                  throw new Error(
+                    `No Design Draft found linked to this order (${projectId}). Please ensure the Design Draft's "Project Information" field is linked to the correct submission.`
+                  );
                 }
               } catch (err) {
                 console.error("Error finding Design Draft record:", err);
-                throw new Error("Could not find Design Draft record. Please ensure a design draft exists for this order.");
+                if (err.message && err.message.includes("No Design Draft found")) {
+                  throw err;
+                }
+                throw new Error(
+                  "Could not search for Design Draft record. " +
+                    (err.responseJSON?.error?.message || err.message || "Please contact support.")
+                );
               }
             } else {
               throw new Error("Missing submission ID. Cannot save feedback.");
@@ -939,7 +964,7 @@
             // 6. Update the Design Draft record with feedback
             const updatePayload = {
               fields: {
-                "Feedback": allComments,
+                Feedback: allComments,
                 "Annotated Design": [
                   {
                     url: imageUrl,
