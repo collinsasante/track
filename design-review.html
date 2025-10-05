@@ -535,7 +535,7 @@
             style="display: none; margin-bottom: 20px"
           >
             <button class="revision-tab active" data-revision="1">
-              <i class="fas fa-image"></i>Initial Design 1
+              <i class="fas fa-image"></i>Initial Design
             </button>
             <button class="revision-tab" data-revision="2">
               <i class="fas fa-image"></i> Revision 1
@@ -1373,16 +1373,16 @@
             const isDesignDraft = currentRevision === 1;
 
             const feedbackFieldName = isDesignDraft
-              ? `Feedback Design Draft 1`
+              ? `Feedback`
               : `Feedback Rev ${actualRevision}`;
             const annotatedFieldName = isDesignDraft
-              ? `Annotated Design Design Draft 1`
+              ? `Annotated Design`
               : `Annotated Design Rev ${actualRevision}`;
             const commentsFieldName = isDesignDraft
-              ? `Total Comments Design Draft 1`
+              ? `Total Comments`
               : `Total Comments Rev ${actualRevision}`;
             const createdFieldName = isDesignDraft
-              ? `Feedback Created Design Draft 1`
+              ? `Feedback Created`
               : `Feedback Created Rev ${actualRevision}`;
 
             const updatePayload = {
