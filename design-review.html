@@ -644,6 +644,9 @@
           window.CONFIG.airtable.baseId = config.airtable.baseId;
           window.CONFIG.airtable.apiKey = config.airtable.apiKey;
           console.log("Configuration loaded successfully");
+
+          // Now that config is loaded, load project details
+          await loadProjectDetails();
         } catch (error) {
           console.error("Failed to load configuration:", error);
           alert(
@@ -652,7 +655,7 @@
         }
       }
 
-      // Load config on page load
+      // Load config on page load (this will trigger loadProjectDetails after config loads)
       loadConfig();
     </script>
 
@@ -1515,7 +1518,7 @@
         });
 
       // Initialize
-      loadProjectDetails();
+      // loadProjectDetails is now called after config loads (see loadConfig function)
       displayComments();
     </script>
   </body>
