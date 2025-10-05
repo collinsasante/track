@@ -1372,18 +1372,24 @@
             const actualRevision = revisionMapping[currentRevision];
             const isDesignDraft = currentRevision === 1;
 
+            // Use actual Airtable field names
             const feedbackFieldName = isDesignDraft
-              ? `Feedback`
+              ? `Design Feedback`
               : `Feedback Rev ${actualRevision}`;
             const annotatedFieldName = isDesignDraft
-              ? `Annotated Design`
+              ? `Design Feedback 3`  // Using linked record field for Design Draft 1
               : `Annotated Design Rev ${actualRevision}`;
             const commentsFieldName = isDesignDraft
-              ? `Total Comments`
+              ? `Design Feedback 2`  // Using this field for comment count
               : `Total Comments Rev ${actualRevision}`;
             const createdFieldName = isDesignDraft
-              ? `Feedback Created`
+              ? `Comment Date`
               : `Feedback Created Rev ${actualRevision}`;
+
+            // Prepare the date value based on field type
+            const dateValue = isDesignDraft
+              ? new Date().toISOString().split('T')[0]  // Date field needs YYYY-MM-DD format
+              : new Date().toISOString().split('T')[0]; // Same for revision date fields
 
             const updatePayload = {
               fields: {
@@ -1394,7 +1400,7 @@
                   },
                 ],
                 [commentsFieldName]: comments.length,
-                [createdFieldName]: new Date().toISOString(),
+                [createdFieldName]: dateValue,
               },
             };
 
