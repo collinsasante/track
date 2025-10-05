@@ -144,6 +144,57 @@
         justify-content: center;
       }
 
+      .design-nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.3s;
+        z-index: 100;
+      }
+
+      .design-nav-btn:hover {
+        background: rgba(0, 0, 0, 0.8);
+        transform: translateY(-50%) scale(1.1);
+      }
+
+      .design-nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .design-nav-btn.prev {
+        left: 20px;
+      }
+
+      .design-nav-btn.next {
+        right: 20px;
+      }
+
+      .design-counter {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 100;
+      }
+
       .design-image {
         max-width: 100%;
         height: auto;
@@ -490,12 +541,19 @@
             </button>
           </div>
           <div class="design-image-container" id="imageContainer">
+            <button class="design-nav-btn prev" id="prevDesignBtn" style="display: none;">
+              <i class="fas fa-chevron-left"></i>
+            </button>
             <img
               src="assets/images/left-bg.gif"
               alt="Label Design"
               class="design-image"
               id="designImage"
             />
+            <button class="design-nav-btn next" id="nextDesignBtn" style="display: none;">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="design-counter" id="designCounter" style="display: none;">1 / 1</div>
           </div>
         </div>
 
@@ -612,10 +670,11 @@
       let designDraftRecordId = null;
       let currentRevision = 1;
       let revisionUrls = {
-        1: null,
-        2: null,
-        3: null
+        1: [], // Array of design URLs for revision 1
+        2: [], // Array of design URLs for revision 2
+        3: []  // Array of design URLs for revision 3
       };
+      let currentDesignIndex = 0; // Track which design in the current revision is displayed
 
       const imageContainer = document.getElementById("imageContainer");
       const designImage = document.getElementById("designImage");
@@ -683,37 +742,64 @@
             if (response.records && response.records.length > 0) {
               const fields = response.records[0].fields;
 
-              // Load all revision URLs and convert Google Drive links
-              revisionUrls[1] = convertGoogleDriveUrl(fields["Project File Link (Rev 1.0)"]) || null;
-              revisionUrls[2] = convertGoogleDriveUrl(fields["Project File Link (Rev 1.1)"]) || null;
-              revisionUrls[3] = convertGoogleDriveUrl(fields["Project File Link (Rev 1.2)"]) || null;
+              // Load all designs for each revision
+              // First check Project File Link fields (single URL)
+              const projectFileLinks = [
+                { field: "Project File Link (Rev 1.0)", revision: 1 },
+                { field: "Project File Link (Rev 1.1)", revision: 2 },
+                { field: "Project File Link (Rev 1.2)", revision: 3 }
+              ];
+
+              projectFileLinks.forEach(({ field, revision }) => {
+                if (fields[field]) {
+                  const url = convertGoogleDriveUrl(fields[field]);
+                  if (url) revisionUrls[revision].push(url);
+                }
+              });
+
+              // Then check Design Draft attachment fields (multiple files possible)
+              const designDraftFields = [
+                { field: "Design Draft 1", revision: 1 },
+                { field: "Design Draft 2", revision: 2 },
+                { field: "Design Draft 3", revision: 3 }
+              ];
+
+              designDraftFields.forEach(({ field, revision }) => {
+                if (fields[field] && Array.isArray(fields[field])) {
+                  fields[field].forEach(attachment => {
+                    if (attachment.url) {
+                      revisionUrls[revision].push(attachment.url);
+                    }
+                  });
+                }
+              });
 
               console.log("Revision URLs:", revisionUrls);
 
-              // Find the latest available revision (highest number with URL)
+              // Find the latest available revision (highest number with designs)
               for (let i = 3; i >= 1; i--) {
-                if (revisionUrls[i]) {
+                if (revisionUrls[i].length > 0) {
                   currentRevision = i;
                   break;
                 }
               }
 
               // Show revision tabs if there are multiple revisions
-              const availableRevisions = Object.values(revisionUrls).filter(url => url).length;
+              const availableRevisions = Object.values(revisionUrls).filter(urls => urls.length > 0).length;
               if (availableRevisions > 1) {
                 document.getElementById("revisionTabs").style.display = "flex";
 
                 // Disable tabs for unavailable revisions
                 document.querySelectorAll(".revision-tab").forEach(tab => {
                   const rev = parseInt(tab.getAttribute("data-revision"));
-                  if (!revisionUrls[rev]) {
+                  if (revisionUrls[rev].length === 0) {
                     tab.disabled = true;
                   }
                 });
               }
 
               // Load the latest revision
-              if (revisionUrls[currentRevision]) {
+              if (revisionUrls[currentRevision].length > 0) {
                 loadRevisionImage(currentRevision);
               }
             } else {
@@ -745,6 +831,7 @@
       // Load a specific revision image
       function loadRevisionImage(revision) {
         currentRevision = revision;
+        currentDesignIndex = 0; // Reset to first design
 
         // Update active tab
         document.querySelectorAll(".revision-tab").forEach(tab => {
@@ -754,8 +841,24 @@
           }
         });
 
-        // Load the image
-        const url = revisionUrls[revision];
+        // Load the first design of this revision
+        updateDesignDisplay();
+
+        // Clear comments for this revision
+        clearCommentsForRevision();
+      }
+
+      // Update the design display (image, counter, navigation buttons)
+      function updateDesignDisplay() {
+        const designs = revisionUrls[currentRevision];
+
+        if (!designs || designs.length === 0) {
+          designImage.src = "assets/images/left-bg.gif";
+          return;
+        }
+
+        // Load current design
+        const url = designs[currentDesignIndex];
         if (url) {
           designImage.src = url;
           designImage.onerror = function () {
@@ -764,8 +867,47 @@
           };
         }
 
-        // Clear comments for this revision
-        clearCommentsForRevision();
+        // Update counter
+        const counter = document.getElementById("designCounter");
+        if (designs.length > 1) {
+          counter.textContent = `${currentDesignIndex + 1} / ${designs.length}`;
+          counter.style.display = "block";
+        } else {
+          counter.style.display = "none";
+        }
+
+        // Update navigation buttons
+        const prevBtn = document.getElementById("prevDesignBtn");
+        const nextBtn = document.getElementById("nextDesignBtn");
+
+        if (designs.length > 1) {
+          prevBtn.style.display = "flex";
+          nextBtn.style.display = "flex";
+          prevBtn.disabled = currentDesignIndex === 0;
+          nextBtn.disabled = currentDesignIndex === designs.length - 1;
+        } else {
+          prevBtn.style.display = "none";
+          nextBtn.style.display = "none";
+        }
+      }
+
+      // Navigate to previous design
+      function prevDesign() {
+        if (currentDesignIndex > 0) {
+          currentDesignIndex--;
+          updateDesignDisplay();
+          clearCommentsForRevision();
+        }
+      }
+
+      // Navigate to next design
+      function nextDesign() {
+        const designs = revisionUrls[currentRevision];
+        if (currentDesignIndex < designs.length - 1) {
+          currentDesignIndex++;
+          updateDesignDisplay();
+          clearCommentsForRevision();
+        }
       }
 
       // Clear comments when switching revisions
@@ -778,16 +920,20 @@
         document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
       }
 
-      // Handle revision tab clicks
+      // Handle revision tab clicks and navigation button clicks
       document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll(".revision-tab").forEach(tab => {
           tab.addEventListener("click", function() {
             const revision = parseInt(this.getAttribute("data-revision"));
-            if (revisionUrls[revision]) {
+            if (revisionUrls[revision] && revisionUrls[revision].length > 0) {
               loadRevisionImage(revision);
             }
           });
         });
+
+        // Navigation button handlers
+        document.getElementById("prevDesignBtn").addEventListener("click", prevDesign);
+        document.getElementById("nextDesignBtn").addEventListener("click", nextDesign);
       });
 
       // Click on design to add comment
