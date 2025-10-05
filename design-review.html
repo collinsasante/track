@@ -548,6 +548,7 @@
       let tempMarkerPosition = null;
       let projectId = null;
       let customerName = null;
+      let submissionRecordId = null;
 
       const imageContainer = document.getElementById("imageContainer");
       const designImage = document.getElementById("designImage");
@@ -568,6 +569,7 @@
       // Load project details from URL
       function loadProjectDetails() {
         projectId = getUrlParameter("project");
+        submissionRecordId = getUrlParameter("submissionId");
         customerName = getUrlParameter("customer");
         const designUrl = getUrlParameter("design");
 
@@ -894,11 +896,12 @@
 
             const imageUrl = cloudinaryData.secure_url;
 
-            // 4. Find the matching Design Draft record by Order Number
+            // 4. Find the matching Design Draft record by linked Project Information (Submissions record)
             let designDraftRecordId = null;
-            if (projectId) {
+            if (submissionRecordId) {
               try {
-                const designDraftFormula = `{Order Number}='${projectId}'`;
+                // Search for Design Draft where Project Information links to this submission
+                const designDraftFormula = `FIND('${submissionRecordId}', ARRAYJOIN({Project Information}))`;
                 const designDraftResponse = await $.ajax({
                   url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
                   method: "GET",
@@ -914,11 +917,15 @@
                 if (designDraftResponse.records && designDraftResponse.records.length > 0) {
                   designDraftRecordId = designDraftResponse.records[0].id;
                   console.log("Found matching Design Draft record:", designDraftRecordId);
+                } else {
+                  console.warn("No Design Draft found for submission:", submissionRecordId);
                 }
               } catch (err) {
-                console.warn("Could not find Design Draft record:", err);
-                // Continue anyway - not critical
+                console.error("Error finding Design Draft record:", err);
+                throw new Error("Could not find Design Draft record. Please ensure a design draft exists for this order.");
               }
+            } else {
+              throw new Error("Missing submission ID. Cannot save feedback.");
             }
 
             // 5. Combine all comments into one formatted string
@@ -929,39 +936,32 @@
               )
               .join("\n\n");
 
-            // 6. Save ONE record to Airtable with all comments and image
-            const airtablePayload = {
+            // 6. Update the Design Draft record with feedback
+            const updatePayload = {
               fields: {
-                "Order ID": projectId || "No Project ID",
-                Customer: customerName || "Unknown",
-                Feedback: allComments,
+                "Feedback": allComments,
                 "Annotated Design": [
                   {
                     url: imageUrl,
                   },
                 ],
                 "Total Comments": comments.length,
-                Created: new Date().toLocaleString(),
+                "Feedback Created": new Date().toISOString(),
               },
             };
 
-            // Add the linked Design Draft record if found
-            if (designDraftRecordId) {
-              airtablePayload.fields["Related Design Draft"] = [designDraftRecordId];
-            }
-
             const airtableResponse = await $.ajax({
-              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Feedback`,
-              method: "POST",
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts/${designDraftRecordId}`,
+              method: "PATCH",
               headers: {
                 Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
                 "Content-Type": "application/json",
               },
-              data: JSON.stringify(airtablePayload),
+              data: JSON.stringify(updatePayload),
             });
 
             console.log(
-              "Feedback submitted successfully! Record ID:",
+              "Feedback saved to Design Draft successfully! Record ID:",
               airtableResponse.id
             );
             alert(

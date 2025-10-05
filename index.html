@@ -772,9 +772,10 @@
               }
             }
 
-            // Get the actual Order Number from Airtable record
+            // Get the actual Order Number and record ID from Airtable
             const actualOrderNumber = record.fields["Order Number"] || `ORD-${orderId}`;
-            displayOrderDetails(record, actualOrderNumber, designUrl);
+            const submissionRecordId = record.id;
+            displayOrderDetails(record, actualOrderNumber, submissionRecordId, designUrl);
           } else {
             showError(
               "Order not found. Please check your Order ID and try again."
@@ -788,17 +789,18 @@
         }
       }
 
-      function displayOrderDetails(record, actualOrderNumber, designUrl) {
+      function displayOrderDetails(record, actualOrderNumber, submissionRecordId, designUrl) {
         const fields = record.fields;
 
         // actualOrderNumber is the exact Order Number from Airtable (e.g., "ORD-3JPZG" or "ORD-00001")
+        // submissionRecordId is used to find the linked Design Draft record
         // This ensures consistency between tracking page and design feedback submissions
 
         // Build review URL - use origin instead of removing last segment
         const baseUrl = window.location.origin;
         // Use lookup fields from Project Information
         const customerName = fields["Customer Name (from Project Information)"] || fields["Customer Name"] || "";
-        const reviewUrl = `${baseUrl}/design-review.html?project=${actualOrderNumber}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
+        const reviewUrl = `${baseUrl}/design-review.html?project=${actualOrderNumber}&submissionId=${submissionRecordId}&customer=${encodeURIComponent(customerName)}&design=${encodeURIComponent(designUrl)}`;
 
         // If it's a direct link, redirect immediately to Design Review
         if (isDirectLinkAccess) {
