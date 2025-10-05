@@ -1379,9 +1379,10 @@
             const annotatedFieldName = isDesignDraft
               ? `Annotated Design`  // Attachment field for Design Draft 1
               : `Annotated Design Rev ${actualRevision}`;
+            // Design Feedback 2 is Single line text, so convert number to string
             const commentsFieldName = isDesignDraft
-              ? `Design Feedback 2`  // Using this field for comment count
-              : `Total Comments Rev ${actualRevision}`;
+              ? `Design Feedback 2`  // Single line text field
+              : `Total Comments Rev ${actualRevision}`;  // Number field
             const createdFieldName = isDesignDraft
               ? `Comment Date`
               : `Feedback Created Rev ${actualRevision}`;
@@ -1391,6 +1392,11 @@
               ? new Date().toISOString().split('T')[0]  // Date field needs YYYY-MM-DD format
               : new Date().toISOString().split('T')[0]; // Same for revision date fields
 
+            // Prepare comment count value based on field type
+            const commentCountValue = isDesignDraft
+              ? String(comments.length)  // Single line text field needs string
+              : comments.length;         // Number field needs number
+
             const updatePayload = {
               fields: {
                 [feedbackFieldName]: allComments,
@@ -1399,7 +1405,7 @@
                     url: imageUrl,
                   },
                 ],
-                [commentsFieldName]: comments.length,
+                [commentsFieldName]: commentCountValue,
                 [createdFieldName]: dateValue,
               },
             };
