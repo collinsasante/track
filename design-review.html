@@ -543,6 +543,9 @@
             <button class="revision-tab" data-revision="3">
               <i class="fas fa-image"></i> Design 3
             </button>
+            <button class="revision-tab" data-revision="4">
+              <i class="fas fa-image"></i> Design 4
+            </button>
           </div>
           <div class="design-image-container" id="imageContainer">
             <button
@@ -691,9 +694,10 @@
       let designDraftRecordId = null;
       let currentRevision = 1;
       let revisionUrls = {
-        1: [], // Array of design URLs for revision 1
-        2: [], // Array of design URLs for revision 2
-        3: [], // Array of design URLs for revision 3
+        1: [], // Design Draft 1 - Array of design URLs
+        2: [], // Revision 1 - Array of design URLs
+        3: [], // Revision 2 - Array of design URLs
+        4: [], // Revision 3 - Array of design URLs
       };
       let currentDesignIndex = 0; // Track which design in the current revision is displayed
 
@@ -782,27 +786,12 @@
               const fields = response.records[0].fields;
               console.log("Design Draft fields:", fields);
 
-              // Load all designs for each revision
-              // First check Project File Link fields (single URL)
-              const projectFileLinks = [
-                { field: "Project File Link (Rev 1.0)", revision: 1 },
-                { field: "Project File Link (Rev 1.1)", revision: 2 },
-                { field: "Project File Link (Rev 1.2)", revision: 3 },
-              ];
-
-              projectFileLinks.forEach(({ field, revision }) => {
-                if (fields[field]) {
-                  const url = convertGoogleDriveUrl(fields[field]);
-                  if (url) revisionUrls[revision].push(url);
-                }
-              });
-
-              // Then check both Design Draft and Revision attachment fields (multiple files possible)
+              // Load all designs - each field maps to a separate tab
               const designDraftFields = [
-                { field: "Design Draft 1", revision: 1 },
-                { field: "Revision 1", revision: 1 },
-                { field: "Revision 2", revision: 2 },
-                { field: "Revision 3", revision: 3 },
+                { field: "Design Draft 1", revision: 1 },  // Tab 1: Design 1
+                { field: "Revision 1", revision: 2 },       // Tab 2: Design 2
+                { field: "Revision 2", revision: 3 },       // Tab 3: Design 3
+                { field: "Revision 3", revision: 4 },       // Tab 4: Design 4
               ];
 
               designDraftFields.forEach(({ field, revision }) => {
@@ -829,7 +818,7 @@
               console.log("Final Revision URLs:", revisionUrls);
 
               // Find the latest available revision (highest number with designs)
-              for (let i = 3; i >= 1; i--) {
+              for (let i = 4; i >= 1; i--) {
                 if (revisionUrls[i].length > 0) {
                   currentRevision = i;
                   break;
@@ -1372,10 +1361,29 @@
               .join("\n\n");
 
             // 6. Update the Design Draft record with feedback for the current revision
-            const feedbackFieldName = `Feedback Rev ${currentRevision}`;
-            const annotatedFieldName = `Annotated Design Rev ${currentRevision}`;
-            const commentsFieldName = `Total Comments Rev ${currentRevision}`;
-            const createdFieldName = `Feedback Created Rev ${currentRevision}`;
+            // Map tab number to actual revision: 1=Design Draft 1, 2=Rev 1, 3=Rev 2, 4=Rev 3
+            const revisionMapping = {
+              1: "Design Draft 1",
+              2: 1,  // Revision 1
+              3: 2,  // Revision 2
+              4: 3   // Revision 3
+            };
+
+            const actualRevision = revisionMapping[currentRevision];
+            const isDesignDraft = currentRevision === 1;
+
+            const feedbackFieldName = isDesignDraft ?
+              `Feedback Design Draft 1` :
+              `Feedback Rev ${actualRevision}`;
+            const annotatedFieldName = isDesignDraft ?
+              `Annotated Design Design Draft 1` :
+              `Annotated Design Rev ${actualRevision}`;
+            const commentsFieldName = isDesignDraft ?
+              `Total Comments Design Draft 1` :
+              `Total Comments Rev ${actualRevision}`;
+            const createdFieldName = isDesignDraft ?
+              `Feedback Created Design Draft 1` :
+              `Feedback Created Rev ${actualRevision}`;
 
             const updatePayload = {
               fields: {
