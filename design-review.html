@@ -1681,25 +1681,60 @@
             const record = designDraftResponse.records[0];
             const fields = record.fields;
 
-            // Collect all design files from Project File Link URL fields only
+            // Collect all design files from attachment fields
             const designFiles = [];
 
-            // Check for Project File Link URL fields (Rev 1.0, 1.1, 1.2, 1.3)
-            const urlFields = [
-              "Project File Link (Rev 1.0)",
-              "Project File Link (Rev 1.1)",
-              "Project File Link (Rev 1.2)",
-              "Project File Link (Rev 1.3)",
-            ];
+            // Check Design Draft 1 attachment field (Initial Design)
+            if (fields["Design Draft 1"] && Array.isArray(fields["Design Draft 1"])) {
+              fields["Design Draft 1"].forEach((attachment, idx) => {
+                if (attachment.url) {
+                  const filename = attachment.filename || `Initial_Design_${idx + 1}.${attachment.type?.split('/')[1] || 'png'}`;
+                  designFiles.push({
+                    name: `Initial_Design_${idx + 1}_${filename}`,
+                    url: attachment.url,
+                  });
+                }
+              });
+            }
 
-            urlFields.forEach((fieldName, index) => {
-              if (fields[fieldName] && typeof fields[fieldName] === "string") {
-                designFiles.push({
-                  name: `Revision_${index + 1}.png`,
-                  url: fields[fieldName],
-                });
-              }
-            });
+            // Check Revision 1 attachment field
+            if (fields["Revision 1"] && Array.isArray(fields["Revision 1"])) {
+              fields["Revision 1"].forEach((attachment, idx) => {
+                if (attachment.url) {
+                  const filename = attachment.filename || `Revision_1_${idx + 1}.${attachment.type?.split('/')[1] || 'png'}`;
+                  designFiles.push({
+                    name: `Revision_1_${idx + 1}_${filename}`,
+                    url: attachment.url,
+                  });
+                }
+              });
+            }
+
+            // Check Revision 2 attachment field
+            if (fields["Revision 2"] && Array.isArray(fields["Revision 2"])) {
+              fields["Revision 2"].forEach((attachment, idx) => {
+                if (attachment.url) {
+                  const filename = attachment.filename || `Revision_2_${idx + 1}.${attachment.type?.split('/')[1] || 'png'}`;
+                  designFiles.push({
+                    name: `Revision_2_${idx + 1}_${filename}`,
+                    url: attachment.url,
+                  });
+                }
+              });
+            }
+
+            // Check Revision 3 attachment field
+            if (fields["Revision 3"] && Array.isArray(fields["Revision 3"])) {
+              fields["Revision 3"].forEach((attachment, idx) => {
+                if (attachment.url) {
+                  const filename = attachment.filename || `Revision_3_${idx + 1}.${attachment.type?.split('/')[1] || 'png'}`;
+                  designFiles.push({
+                    name: `Revision_3_${idx + 1}_${filename}`,
+                    url: attachment.url,
+                  });
+                }
+              });
+            }
 
             if (designFiles.length === 0) {
               throw new Error("No design files available to download.");
