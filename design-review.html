@@ -409,6 +409,30 @@
         border-radius: 8px;
         margin-bottom: 14px;
         border-left: 4px solid var(--primary-color);
+        position: relative;
+      }
+
+      .comment-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .btn-edit, .btn-delete {
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-edit:hover, .btn-delete:hover {
+        background: var(--primary-color);
+        color: #fff;
       }
 
       .comment-header {
@@ -627,9 +651,9 @@
           <button
             id="submitAllBtn"
             class="btn-primary"
-            style="display: none; margin-top: 20px"
+            style="display: none; margin-top: 20px; width: 100%"
           >
-            <i class="fas fa-paper-plane"></i> Submit All Feedback
+            <i class="fas fa-paper-plane"></i> Submit All Feedback to Designer
           </button>
         </div>
       </div>
@@ -1192,10 +1216,96 @@
                 <div class="comment-time">
                   <i class="fas fa-clock"></i> ${escapeHtml(comment.timestamp)}
                 </div>
+                <div class="comment-actions">
+                  <button class="btn-edit" onclick="editComment(${comment.id})">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="btn-delete" onclick="deleteComment(${comment.id})">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
               </div>
             `
           )
           .join("");
+      }
+
+      // Edit comment
+      function editComment(commentId) {
+        const comment = comments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        // Find the marker and remove it temporarily
+        const markers = document.querySelectorAll('.comment-marker');
+        markers.forEach(marker => {
+          if (marker.textContent == commentId) {
+            marker.remove();
+          }
+        });
+
+        // Find the label and remove it
+        const labels = document.querySelectorAll('.comment-label');
+        labels.forEach(label => {
+          const markerX = comment.position.x;
+          if ((markerX > 50 && label.classList.contains('left')) ||
+              (markerX <= 50 && label.classList.contains('right'))) {
+            label.remove();
+          }
+        });
+
+        // Pre-fill the form with existing comment
+        document.getElementById("userComment").value = comment.text;
+        tempMarkerPosition = comment.position;
+
+        // Show preview marker
+        showPreviewMarker(comment.position.x, comment.position.y);
+
+        // Show the form
+        const rect = imageContainer.getBoundingClientRect();
+        const clickX = rect.left + (rect.width * comment.position.x / 100);
+        const clickY = rect.top + (rect.height * comment.position.y / 100);
+        positionCommentForm(clickX, clickY);
+        commentForm.style.display = "block";
+        document.getElementById("userComment").focus();
+
+        // Remove the comment from array (will be re-added when form is submitted)
+        comments = comments.filter(c => c.id !== commentId);
+        displayComments();
+      }
+
+      // Delete comment
+      function deleteComment(commentId) {
+        if (!confirm('Are you sure you want to delete this comment?')) return;
+
+        // Remove marker
+        const markers = document.querySelectorAll('.comment-marker');
+        markers.forEach(marker => {
+          if (marker.textContent == commentId) {
+            marker.remove();
+          }
+        });
+
+        // Remove label
+        const comment = comments.find(c => c.id === commentId);
+        if (comment) {
+          const labels = document.querySelectorAll('.comment-label');
+          labels.forEach(label => {
+            const markerX = comment.position.x;
+            if ((markerX > 50 && label.classList.contains('left')) ||
+                (markerX <= 50 && label.classList.contains('right'))) {
+              label.remove();
+            }
+          });
+        }
+
+        // Remove from array
+        comments = comments.filter(c => c.id !== commentId);
+        displayComments();
+
+        // Hide submit button if no comments
+        if (comments.length === 0) {
+          document.getElementById("submitAllBtn").style.display = "none";
+        }
       }
 
       // Submit all feedback to Airtable with screenshot
