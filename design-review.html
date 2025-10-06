@@ -1372,30 +1372,25 @@
             const actualRevision = revisionMapping[currentRevision];
             const isDesignDraft = currentRevision === 1;
 
-            // Use actual Airtable field names
-            const feedbackFieldName = isDesignDraft
-              ? `Design Feedback`
-              : `Feedback Rev ${actualRevision}`;
-            const annotatedFieldName = isDesignDraft
-              ? `Annotated Design`  // Attachment field for Design Draft 1
-              : `Annotated Design Rev ${actualRevision}`;
-            // Design Feedback 2 is Single line text, so convert number to string
-            const commentsFieldName = isDesignDraft
-              ? `Design Feedback 2`  // Single line text field
-              : `Total Comments Rev ${actualRevision}`;  // Number field
-            const createdFieldName = isDesignDraft
-              ? `Comment Date`
-              : `Feedback Created Rev ${actualRevision}`;
+            // Map all tabs to their revision numbers for field naming
+            // Tab 1 (Initial Design) → Rev 1, Tab 2 (Revision 1) → Rev 1, Tab 3 (Revision 2) → Rev 2, Tab 4 (Revision 3) → Rev 3
+            const revisionForFields = {
+              1: 1,  // Initial Design → Annotated Design Rev 1
+              2: 1,  // Revision 1 → Annotated Design Rev 1 (same as initial)
+              3: 2,  // Revision 2 → Annotated Design Rev 2
+              4: 3   // Revision 3 → Annotated Design Rev 3
+            };
 
-            // Prepare the date value based on field type
-            const dateValue = isDesignDraft
-              ? new Date().toISOString().split('T')[0]  // Date field needs YYYY-MM-DD format
-              : new Date().toISOString().split('T')[0]; // Same for revision date fields
+            const fieldRevision = revisionForFields[currentRevision];
 
-            // Prepare comment count value based on field type
-            const commentCountValue = isDesignDraft
-              ? String(comments.length)  // Single line text field needs string
-              : comments.length;         // Number field needs number
+            // All tabs use the same field structure with Rev X suffix
+            const feedbackFieldName = `Feedback Rev ${fieldRevision}`;
+            const annotatedFieldName = `Annotated Design Rev ${fieldRevision}`;
+            const commentsFieldName = `Total Comments Rev ${fieldRevision}`;
+            const createdFieldName = `Feedback Created Rev ${fieldRevision}`;
+
+            // All revision fields use Date type (YYYY-MM-DD format)
+            const dateValue = new Date().toISOString().split('T')[0];
 
             const updatePayload = {
               fields: {
@@ -1405,7 +1400,7 @@
                     url: imageUrl,
                   },
                 ],
-                [commentsFieldName]: commentCountValue,
+                [commentsFieldName]: comments.length,  // All are Number fields now
                 [createdFieldName]: dateValue,
               },
             };
