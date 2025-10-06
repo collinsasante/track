@@ -725,6 +725,15 @@
       };
       let currentDesignIndex = 0; // Track which design in the current revision is displayed
 
+      // Store comments separately for each revision and design
+      let allCommentsStore = {
+        1: {}, // Revision 1: { designIndex: [comments] }
+        2: {}, // Revision 2: { designIndex: [comments] }
+        3: {}, // Revision 3: { designIndex: [comments] }
+        4: {}, // Revision 4: { designIndex: [comments] }
+      };
+      let globalCommentCounter = 0; // Global counter across all designs
+
       const imageContainer = document.getElementById("imageContainer");
       const designImage = document.getElementById("designImage");
       const commentForm = document.getElementById("commentForm");
@@ -897,6 +906,12 @@
 
       // Load a specific revision image
       function loadRevisionImage(revision) {
+        // Save comments from current revision/design before switching
+        saveCurrentComments();
+
+        // Remove all markers from previous revision
+        document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+
         currentRevision = revision;
         currentDesignIndex = 0; // Reset to first design
 
@@ -910,9 +925,33 @@
 
         // Load the first design of this revision
         updateDesignDisplay();
+      }
 
-        // Clear comments for this revision
-        clearCommentsForRevision();
+      // Save current comments to store before switching
+      function saveCurrentComments() {
+        if (!allCommentsStore[currentRevision][currentDesignIndex]) {
+          allCommentsStore[currentRevision][currentDesignIndex] = [];
+        }
+        allCommentsStore[currentRevision][currentDesignIndex] = [...comments];
+      }
+
+      // Load comments from store for current revision and design
+      function loadCurrentComments() {
+        const stored = allCommentsStore[currentRevision][currentDesignIndex];
+        if (stored && Array.isArray(stored)) {
+          comments = [...stored];
+          // Restore markers
+          comments.forEach(comment => addMarker(comment));
+        } else {
+          comments = [];
+        }
+        displayComments();
+
+        // Show/hide submit button
+        const hasAnyComments = Object.values(allCommentsStore).some(revisionStore =>
+          Object.values(revisionStore).some(designComments => designComments && designComments.length > 0)
+        );
+        document.getElementById("submitAllBtn").style.display = hasAnyComments ? "block" : "none";
       }
 
       // Update the design display (image, counter, navigation buttons)
@@ -956,14 +995,18 @@
           prevBtn.style.display = "none";
           nextBtn.style.display = "none";
         }
+
+        // Load comments for this design
+        loadCurrentComments();
       }
 
       // Navigate to previous design
       function prevDesign() {
         if (currentDesignIndex > 0) {
+          saveCurrentComments(); // Save before switching
+          document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
           currentDesignIndex--;
           updateDesignDisplay();
-          clearCommentsForRevision();
         }
       }
 
@@ -971,9 +1014,10 @@
       function nextDesign() {
         const designs = revisionUrls[currentRevision];
         if (currentDesignIndex < designs.length - 1) {
+          saveCurrentComments(); // Save before switching
+          document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
           currentDesignIndex++;
           updateDesignDisplay();
-          clearCommentsForRevision();
         }
       }
 
@@ -1114,10 +1158,10 @@
           return;
         }
 
-        commentCounter++;
+        globalCommentCounter++;
 
         const comment = {
-          id: commentCounter,
+          id: globalCommentCounter,
           author: customerName || "Customer",
           text: userComment,
           position: tempMarkerPosition,
@@ -1129,16 +1173,15 @@
         removePreviewMarker(); // Remove preview marker
         addMarker(comment); // Add permanent marker
         displayComments();
+        saveCurrentComments(); // Save to store
 
         // Reset form
         feedbackForm.reset();
         commentForm.style.display = "none";
         tempMarkerPosition = null;
 
-        // Show submit all button if we have comments
-        if (comments.length > 0) {
-          document.getElementById("submitAllBtn").style.display = "block";
-        }
+        // Show submit all button
+        document.getElementById("submitAllBtn").style.display = "block";
       });
 
       function addMarker(comment) {
@@ -1271,6 +1314,7 @@
         // Remove the comment from array (will be re-added when form is submitted)
         comments = comments.filter(c => c.id !== commentId);
         displayComments();
+        saveCurrentComments();
       }
 
       // Delete comment
@@ -1301,9 +1345,13 @@
         // Remove from array
         comments = comments.filter(c => c.id !== commentId);
         displayComments();
+        saveCurrentComments();
 
-        // Hide submit button if no comments
-        if (comments.length === 0) {
+        // Hide submit button if no comments anywhere
+        const hasAnyComments = Object.values(allCommentsStore).some(revisionStore =>
+          Object.values(revisionStore).some(designComments => designComments && designComments.length > 0)
+        );
+        if (!hasAnyComments) {
           document.getElementById("submitAllBtn").style.display = "none";
         }
       }
@@ -1315,8 +1363,23 @@
           const btn = this;
           const originalText = btn.innerHTML;
 
+          // Save current comments before submitting
+          saveCurrentComments();
+
+          // Collect all comments from all revisions and designs
+          const allComments = [];
+          Object.keys(allCommentsStore).forEach(revisionKey => {
+            const revisionStore = allCommentsStore[revisionKey];
+            Object.keys(revisionStore).forEach(designKey => {
+              const designComments = revisionStore[designKey];
+              if (designComments && designComments.length > 0) {
+                allComments.push(...designComments);
+              }
+            });
+          });
+
           // Validate we have comments to submit
-          if (!comments || comments.length === 0) {
+          if (allComments.length === 0) {
             alert(
               "No comments to submit. Please add at least one comment first."
             );
@@ -1463,7 +1526,7 @@
             }
 
             // 5. Combine all comments into one formatted string
-            const allComments = comments
+            const formattedComments = allComments
               .map(
                 (c, index) =>
                   `[${index + 1}] ${c.text} (Position: ${c.position.x.toFixed(1)}, ${c.position.y.toFixed(1)})`
@@ -1504,13 +1567,13 @@
 
             const updatePayload = {
               fields: {
-                [feedbackFieldName]: allComments,
+                [feedbackFieldName]: formattedComments,
                 [annotatedFieldName]: [
                   {
                     url: imageUrl,
                   },
                 ],
-                [commentsFieldName]: comments.length,  // All are Number fields now
+                [commentsFieldName]: allComments.length,  // All are Number fields now
                 [createdFieldName]: dateValue,
               },
             };
@@ -1530,10 +1593,20 @@
               airtableResponse.id
             );
             alert(
-              `Success! ${comments.length} comment${comments.length > 1 ? "s" : ""} is submitted.`
+              `Success! ${allComments.length} comment${allComments.length > 1 ? "s" : ""} submitted.`
             );
 
-            // Hide the submit button
+            // Clear all comments and hide the submit button
+            allCommentsStore = {
+              1: {},
+              2: {},
+              3: {},
+              4: {},
+            };
+            comments = [];
+            globalCommentCounter = 0;
+            document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+            displayComments();
             btn.style.display = "none";
           } catch (error) {
             console.error("Error submitting feedback:", error);
