@@ -1656,51 +1656,32 @@
           btn.disabled = true;
 
           try {
-            // Find the Submission record first to get linked Discovery Call Records
-            const submissionFormula = `{Order Number}='${projectId}'`;
+            // Find the Design Draft record to get Project File Link
+            const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
 
-            const submissionResponse = await $.ajax({
-              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Submissions`,
+            const designDraftResponse = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
               method: "GET",
               headers: {
                 Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
               },
               data: {
-                filterByFormula: submissionFormula,
+                filterByFormula: designDraftFormula,
                 maxRecords: 1,
               },
             });
 
             if (
-              !submissionResponse.records ||
-              submissionResponse.records.length === 0
+              !designDraftResponse.records ||
+              designDraftResponse.records.length === 0
             ) {
-              throw new Error("No submission record found for this order.");
+              throw new Error("No Design Draft record found for this order.");
             }
 
-            const submissionRecord = submissionResponse.records[0];
-            const discoveryCallRecords = submissionRecord.fields["Discovery Call Records"];
+            const designDraftRecord = designDraftResponse.records[0];
+            const fields = designDraftRecord.fields;
 
-            if (!discoveryCallRecords || !Array.isArray(discoveryCallRecords) || discoveryCallRecords.length === 0) {
-              throw new Error("No Discovery Call Record found for this order.");
-            }
-
-            // Fetch the Discovery Call Record to get Project File Link
-            const discoveryCallId = discoveryCallRecords[0];
-
-            const discoveryCallResponse = await $.ajax({
-              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Discovery%20Call%20Records/${discoveryCallId}`,
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
-              },
-            });
-
-            if (!discoveryCallResponse.fields) {
-              throw new Error("Discovery Call Record has no data.");
-            }
-
-            console.log("Discovery Call Record fields:", discoveryCallResponse.fields);
+            console.log("Design Draft fields:", fields);
 
             // Get the Project File Link - check multiple field name variants
             const urlFields = [
@@ -1712,13 +1693,15 @@
               'Project Files',
               'File Link',
               'Google Drive Link',
-              'Drive Link'
+              'Drive Link',
+              'Design URL',
+              'URL'
             ];
 
             let projectFileLink = null;
             for (const fieldName of urlFields) {
-              if (discoveryCallResponse.fields[fieldName] && typeof discoveryCallResponse.fields[fieldName] === 'string') {
-                projectFileLink = discoveryCallResponse.fields[fieldName];
+              if (fields[fieldName] && typeof fields[fieldName] === 'string') {
+                projectFileLink = fields[fieldName];
                 console.log(`Found Project File Link in field: ${fieldName}`, projectFileLink);
                 break;
               }
@@ -1726,19 +1709,20 @@
 
             // If not found in specific fields, look for any field that contains a URL
             if (!projectFileLink) {
-              const urlField = Object.keys(discoveryCallResponse.fields).find(key =>
-                typeof discoveryCallResponse.fields[key] === 'string' &&
-                (discoveryCallResponse.fields[key].startsWith('http://') ||
-                 discoveryCallResponse.fields[key].startsWith('https://'))
+              const urlField = Object.keys(fields).find(key =>
+                typeof fields[key] === 'string' &&
+                (fields[key].startsWith('http://') || fields[key].startsWith('https://')) &&
+                !fields[key].includes('track.packglamour') &&
+                !fields[key].includes('cloudinary.com')
               );
               if (urlField) {
-                projectFileLink = discoveryCallResponse.fields[urlField];
+                projectFileLink = fields[urlField];
                 console.log(`Found URL in field: ${urlField}`, projectFileLink);
               }
             }
 
             if (!projectFileLink || typeof projectFileLink !== 'string') {
-              console.error("Available fields:", Object.keys(discoveryCallResponse.fields));
+              console.error("Available fields:", Object.keys(fields));
               throw new Error("No Project File Link found. Please contact support.");
             }
 
