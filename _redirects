@@ -1,0 +1,3 @@
+# Redirect order URLs to index with the order ID as parameter
+# Catch /ORD-XXXXX patterns
+/ORD-*   /index.html?order=:splat   200

@@ -1,0 +1,1742 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Design Review - Label Feedback</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap");
+
+      :root {
+        --field-text-color: #1a1919;
+        --field-place-color: #9f9f9f;
+        --text-color: #282829;
+        --primary-color: #ff0000;
+        --secondary-color: #f7933a;
+        --field-color: #fae4ca;
+        --bg-color: #fff9f2;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Jost", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--field-text-color);
+        line-height: 1.6;
+      }
+
+      .header {
+        padding: 20px 40px;
+        background-color: #fff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .logo img {
+        width: 200px;
+        height: auto;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+      }
+
+      .logo img:hover {
+        transform: scale(1.05);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 45px 20px;
+      }
+
+      .review-header {
+        margin-bottom: 40px;
+        text-align: center;
+      }
+
+      .review-header h1 {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: var(--field-text-color);
+      }
+
+      .review-header p {
+        font-size: 18px;
+        color: var(--text-color);
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .review-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 40px;
+        align-items: start;
+      }
+
+      .design-viewer,
+      .comments-panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 28px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      }
+
+      .revision-tabs {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .revision-tab {
+        background: #fff;
+        border: 2px solid #e0e0e0;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: "Jost", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-color);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .revision-tab:hover {
+        border-color: var(--primary-color);
+        background: #fff5f5;
+      }
+
+      .revision-tab.active {
+        background: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+      }
+
+      .revision-tab:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .design-image-container {
+        position: relative;
+        background: #f5f5f5;
+        border-radius: 10px;
+        overflow: hidden;
+        min-height: 480px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .design-nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.3s;
+        z-index: 100;
+      }
+
+      .design-nav-btn:hover {
+        background: rgba(0, 0, 0, 0.8);
+        transform: translateY(-50%) scale(1.1);
+      }
+
+      .design-nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .design-nav-btn.prev {
+        left: 20px;
+      }
+
+      .design-nav-btn.next {
+        right: 20px;
+      }
+
+      .design-counter {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 100;
+      }
+
+      .design-image {
+        max-width: 100%;
+        height: auto;
+        cursor: crosshair;
+      }
+
+      .comment-marker {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        background: var(--secondary-color);
+        border: 3px solid #fff;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 13px;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        transition: transform 0.2s ease;
+      }
+
+      .comment-marker:hover {
+        transform: translate(-50%, -50%) scale(1.15);
+      }
+
+      .comment-label {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        max-width: 200px;
+        word-wrap: break-word;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+        z-index: 10;
+        line-height: 1.4;
+      }
+
+      .comment-label::before {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-style: solid;
+      }
+
+      /* Arrow pointing left (label on right of marker) */
+      .comment-label.right::before {
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-width: 8px 8px 8px 0;
+        border-color: transparent rgba(0, 0, 0, 0.85) transparent transparent;
+      }
+
+      /* Arrow pointing right (label on left of marker) */
+      .comment-label.left::before {
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-width: 8px 0 8px 8px;
+        border-color: transparent transparent transparent rgba(0, 0, 0, 0.85);
+      }
+
+      .comments-panel h2 {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--field-text-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .add-comment-form {
+        position: fixed;
+        background: #1a1a1a;
+        padding: 0;
+        border-radius: 12px;
+        border: 1px solid #333;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        max-width: 320px;
+        animation: fadeIn 0.2s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .comment-form-header {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid #333;
+      }
+
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--secondary-color);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .form-group {
+        margin: 0;
+      }
+
+      .form-group label {
+        display: none;
+      }
+
+      .form-group textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: none;
+        background: #1a1a1a;
+        color: #fff;
+        font-family: "Jost", sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        resize: none;
+        min-height: 80px;
+      }
+
+      .form-group textarea:focus {
+        outline: none;
+      }
+
+      .form-group textarea::placeholder {
+        color: #666;
+      }
+
+      .comment-form-actions {
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        border-top: 1px solid #333;
+        background: #151515;
+        border-radius: 0 0 12px 12px;
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex: 1;
+      }
+
+      .btn-primary:hover {
+        background: #cc0000;
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-cancel {
+        background: transparent;
+        color: #999;
+        border: 1px solid #333;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-cancel:hover {
+        background: #222;
+        color: #fff;
+      }
+
+      .comment-list {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 6px;
+      }
+
+      .comment-item {
+        background: var(--bg-color);
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 14px;
+        border-left: 4px solid var(--primary-color);
+        position: relative;
+      }
+
+      .comment-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .btn-edit, .btn-delete {
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-edit:hover, .btn-delete:hover {
+        background: var(--primary-color);
+        color: #fff;
+      }
+
+      .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .comment-author {
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .comment-number {
+        background: var(--secondary-color);
+        color: #fff;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .comment-text {
+        margin-top: 8px;
+        font-size: 15px;
+        color: var(--text-color);
+      }
+
+      .comment-time {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--field-place-color);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .instruction-box {
+        background: #fff;
+        border: 2px dashed var(--primary-color);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .instruction-box i {
+        color: var(--primary-color);
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+
+      .instruction-box p {
+        font-size: 15px;
+        color: var(--text-color);
+      }
+
+      .no-comments {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--field-place-color);
+      }
+
+      @media (max-width: 1024px) {
+        .review-grid {
+          grid-template-columns: 1fr;
+        }
+        .design-viewer {
+          position: relative;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .review-header h1 {
+          font-size: 28px;
+        }
+        .comments-panel,
+        .design-viewer {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">
+        <img src="assets/images/logo.png" alt="Logo" />
+      </div>
+      <button
+        id="downloadFilesBtn"
+        class="btn-primary"
+        style="padding: 8px 16px; font-size: 14px; margin-left: 1200px"
+      >
+        <i class="fas fa-download"></i> Download Files
+      </button>
+    </div>
+
+    <div class="container">
+      <div class="review-header">
+        <h1>Review Your Design</h1>
+        <p id="projectInfo">
+          Click anywhere on the design to add feedback. Your comments will help
+          us perfect your design.
+        </p>
+      </div>
+
+      <div class="instruction-box">
+        <i class="fas fa-hand-pointer"></i>
+        <p>
+          <strong>How it works:</strong> Click on any area of the design below
+          to add your feedback
+        </p>
+      </div>
+
+      <div class="review-grid">
+        <div class="design-viewer">
+          <div
+            class="revision-tabs"
+            id="revisionTabs"
+            style="display: none; margin-bottom: 20px"
+          >
+            <button class="revision-tab active" data-revision="1">
+              <i class="fas fa-image"></i>Initial Design
+            </button>
+            <button class="revision-tab" data-revision="2">
+              <i class="fas fa-image"></i> Revision 1
+            </button>
+            <button class="revision-tab" data-revision="3">
+              <i class="fas fa-image"></i> Revision 2
+            </button>
+            <button class="revision-tab" data-revision="4">
+              <i class="fas fa-image"></i> Revision 3
+            </button>
+          </div>
+          <div class="design-image-container" id="imageContainer">
+            <button
+              class="design-nav-btn prev"
+              id="prevDesignBtn"
+              style="display: none"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <img
+              src="assets/images/left-bg.gif"
+              alt="Label Design"
+              class="design-image"
+              id="designImage"
+            />
+            <button
+              class="design-nav-btn next"
+              id="nextDesignBtn"
+              style="display: none"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <div
+              class="design-counter"
+              id="designCounter"
+              style="display: none"
+            >
+              1 / 1
+            </div>
+          </div>
+        </div>
+
+        <div class="comments-panel">
+          <h2><i class="fas fa-comments"></i> Feedback</h2>
+
+          <div class="add-comment-form" id="commentForm" style="display: none">
+            <div class="comment-form-header">
+              <div class="user-avatar" id="userAvatar">C</div>
+              <div style="color: #ccc; font-size: 14px; font-weight: 500">
+                Add feedback
+              </div>
+            </div>
+            <form id="feedbackForm">
+              <div class="form-group">
+                <textarea
+                  id="userComment"
+                  required
+                  placeholder="Leave a comment"
+                  rows="3"
+                ></textarea>
+              </div>
+              <div class="comment-form-actions">
+                <button type="button" class="btn-cancel" id="cancelBtn">
+                  Cancel
+                </button>
+                <button type="submit" class="btn-primary">
+                  <i class="fas fa-paper-plane"></i> Comment
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="comment-list" id="commentList">
+            <div class="no-comments">
+              <i
+                class="fas fa-comment-dots"
+                style="
+                  font-size: 48px;
+                  color: var(--field-place-color);
+                  margin-bottom: 15px;
+                "
+              ></i>
+              <p>
+                No feedback yet. Click on the design to add your first comment!
+              </p>
+            </div>
+          </div>
+
+          <button
+            id="submitAllBtn"
+            class="btn-primary"
+            style="display: none; margin-top: 20px; width: 100%"
+          >
+            <i class="fas fa-paper-plane"></i> Submit All Feedback to Designer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration from Cloudflare Environment Variables -->
+    <script>
+      window.CONFIG = {
+        airtable: {
+          baseId: "",
+          tableId: "Design Feedback",
+          apiKey: "",
+        },
+      };
+
+      // Load configuration from API
+      async function loadConfig() {
+        try {
+          const response = await fetch("/api/config");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const config = await response.json();
+
+          if (
+            !config.airtable ||
+            !config.airtable.baseId ||
+            !config.airtable.apiKey
+          ) {
+            throw new Error("Invalid configuration received from server");
+          }
+
+          window.CONFIG.airtable.baseId = config.airtable.baseId;
+          window.CONFIG.airtable.apiKey = config.airtable.apiKey;
+          console.log("Configuration loaded successfully");
+
+          // Now that config is loaded, load project details
+          await loadProjectDetails();
+        } catch (error) {
+          console.error("Failed to load configuration:", error);
+          alert(
+            "Unable to load application configuration. Please refresh the page or contact support."
+          );
+        }
+      }
+
+      // Load config on page load (this will trigger loadProjectDetails after config loads)
+      loadConfig();
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+      let comments = [];
+      let commentCounter = 0;
+      let tempMarkerPosition = null;
+      let projectId = null;
+      let customerName = null;
+      let submissionRecordId = null;
+      let designDraftRecordId = null;
+      let currentRevision = 1;
+      let revisionUrls = {
+        1: [], // Design Draft 1 - Array of design URLs
+        2: [], // Revision 1 - Array of design URLs
+        3: [], // Revision 2 - Array of design URLs
+        4: [], // Revision 3 - Array of design URLs
+      };
+      let currentDesignIndex = 0; // Track which design in the current revision is displayed
+
+      // Store comments separately for each revision and design
+      let allCommentsStore = {
+        1: {}, // Revision 1: { designIndex: [comments] }
+        2: {}, // Revision 2: { designIndex: [comments] }
+        3: {}, // Revision 3: { designIndex: [comments] }
+        4: {}, // Revision 4: { designIndex: [comments] }
+      };
+      let globalCommentCounter = 0; // Global counter across all designs
+
+      const imageContainer = document.getElementById("imageContainer");
+      const designImage = document.getElementById("designImage");
+      const commentForm = document.getElementById("commentForm");
+      const feedbackForm = document.getElementById("feedbackForm");
+      const commentList = document.getElementById("commentList");
+
+      // Get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        const results = regex.exec(location.search);
+        return results === null
+          ? ""
+          : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      // Convert Google Drive sharing link to direct image URL
+      function convertGoogleDriveUrl(url) {
+        if (!url) return null;
+        if (url.includes("drive.google.com")) {
+          const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (fileIdMatch) {
+            const fileId = fileIdMatch[1];
+            return `https://drive.google.com/uc?export=view&id=${fileId}`;
+          }
+        }
+        return url;
+      }
+
+      // Load project details from URL and fetch all revisions
+      async function loadProjectDetails() {
+        projectId = getUrlParameter("project");
+        submissionRecordId = getUrlParameter("submissionId");
+        customerName = getUrlParameter("customer");
+
+        console.log("=== LOADING PROJECT DETAILS ===");
+        console.log("Project ID:", projectId);
+        console.log("Customer:", customerName);
+
+        if (projectId) {
+          document.getElementById("projectInfo").innerHTML =
+            `Project ID: <strong>${escapeHtml(projectId)}</strong>${customerName ? ` | Customer: <strong>${escapeHtml(customerName)}</strong>` : ""}<br>` +
+            "Click anywhere on the design to add feedback. Your comments will help us perfect your design.";
+        }
+
+        // Set user avatar initial
+        if (customerName) {
+          const initial = customerName.charAt(0).toUpperCase();
+          document.getElementById("userAvatar").textContent = initial;
+        }
+
+        // Fetch all revision URLs from Design Drafts
+        console.log("Checking conditions:");
+        console.log("  projectId:", projectId);
+        console.log("  baseId:", window.CONFIG.airtable.baseId);
+        console.log("  apiKey exists:", !!window.CONFIG.airtable.apiKey);
+
+        if (
+          projectId &&
+          window.CONFIG.airtable.baseId &&
+          window.CONFIG.airtable.apiKey
+        ) {
+          console.log("=== FETCHING DESIGN DRAFTS ===");
+          try {
+            const formula = `{Order Number (from Project Information)}='${projectId}'`;
+            console.log("Search formula:", formula);
+
+            const response = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+              },
+              data: {
+                filterByFormula: formula,
+                maxRecords: 1,
+              },
+            });
+
+            console.log("Airtable response:", response);
+
+            if (response.records && response.records.length > 0) {
+              const fields = response.records[0].fields;
+              console.log("Design Draft fields:", fields);
+
+              // Load all designs - each field maps to a separate tab
+              const designDraftFields = [
+                { field: "Design Draft 1", revision: 1 }, // Tab 1: Design 1
+                { field: "Revision 1", revision: 2 }, // Tab 2: Design 2
+                { field: "Revision 2", revision: 3 }, // Tab 3: Design 3
+                { field: "Revision 3", revision: 4 }, // Tab 4: Design 4
+              ];
+
+              designDraftFields.forEach(({ field, revision }) => {
+                console.log(`Checking field: ${field}`, fields[field]);
+                if (fields[field] && Array.isArray(fields[field])) {
+                  console.log(
+                    `${field} is an array with ${fields[field].length} items`
+                  );
+                  fields[field].forEach((attachment, idx) => {
+                    console.log(`${field}[${idx}]:`, attachment);
+                    if (attachment.url) {
+                      console.log(
+                        `Adding URL to revision ${revision}:`,
+                        attachment.url
+                      );
+                      revisionUrls[revision].push(attachment.url);
+                    }
+                  });
+                } else {
+                  console.log(`${field} is not an array or doesn't exist`);
+                }
+              });
+
+              console.log("Final Revision URLs:", revisionUrls);
+
+              // Find the latest available revision (highest number with designs)
+              for (let i = 4; i >= 1; i--) {
+                if (revisionUrls[i].length > 0) {
+                  currentRevision = i;
+                  break;
+                }
+              }
+
+              // Show revision tabs if there are multiple revisions
+              const availableRevisions = Object.values(revisionUrls).filter(
+                (urls) => urls.length > 0
+              ).length;
+              if (availableRevisions > 1) {
+                document.getElementById("revisionTabs").style.display = "flex";
+
+                // Disable tabs for unavailable revisions
+                document.querySelectorAll(".revision-tab").forEach((tab) => {
+                  const rev = parseInt(tab.getAttribute("data-revision"));
+                  if (revisionUrls[rev].length === 0) {
+                    tab.disabled = true;
+                  }
+                });
+              }
+
+              // Load the latest revision
+              if (revisionUrls[currentRevision].length > 0) {
+                loadRevisionImage(currentRevision);
+              }
+            } else {
+              // No Design Draft found, fallback to URL parameter
+              loadFallbackDesign();
+            }
+          } catch (error) {
+            console.error("Error loading revisions:", error);
+            loadFallbackDesign();
+          }
+        } else {
+          // Config not loaded yet, fallback to URL parameter
+          loadFallbackDesign();
+        }
+      }
+
+      // Fallback to load design from URL parameter (old behavior)
+      function loadFallbackDesign() {
+        const designUrl = getUrlParameter("design");
+        if (designUrl) {
+          designImage.src = designUrl;
+          designImage.onerror = function () {
+            alert("Error loading design image. Please check the URL.");
+            designImage.src = "assets/images/left-bg.gif";
+          };
+        }
+      }
+
+      // Load a specific revision image
+      function loadRevisionImage(revision) {
+        // Save comments from current revision/design before switching
+        saveCurrentComments();
+
+        // Remove all markers from previous revision
+        document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+
+        currentRevision = revision;
+        currentDesignIndex = 0; // Reset to first design
+
+        // Update active tab
+        document.querySelectorAll(".revision-tab").forEach((tab) => {
+          tab.classList.remove("active");
+          if (parseInt(tab.getAttribute("data-revision")) === revision) {
+            tab.classList.add("active");
+          }
+        });
+
+        // Load the first design of this revision
+        updateDesignDisplay();
+      }
+
+      // Save current comments to store before switching
+      function saveCurrentComments() {
+        if (!allCommentsStore[currentRevision][currentDesignIndex]) {
+          allCommentsStore[currentRevision][currentDesignIndex] = [];
+        }
+        allCommentsStore[currentRevision][currentDesignIndex] = [...comments];
+      }
+
+      // Load comments from store for current revision and design
+      function loadCurrentComments() {
+        const stored = allCommentsStore[currentRevision][currentDesignIndex];
+        if (stored && Array.isArray(stored)) {
+          comments = [...stored];
+          // Restore markers
+          comments.forEach(comment => addMarker(comment));
+        } else {
+          comments = [];
+        }
+        displayComments();
+
+        // Show/hide submit button
+        const hasAnyComments = Object.values(allCommentsStore).some(revisionStore =>
+          Object.values(revisionStore).some(designComments => designComments && designComments.length > 0)
+        );
+        document.getElementById("submitAllBtn").style.display = hasAnyComments ? "block" : "none";
+      }
+
+      // Update the design display (image, counter, navigation buttons)
+      function updateDesignDisplay() {
+        const designs = revisionUrls[currentRevision];
+
+        if (!designs || designs.length === 0) {
+          designImage.src = "assets/images/left-bg.gif";
+          return;
+        }
+
+        // Load current design
+        const url = designs[currentDesignIndex];
+        if (url) {
+          designImage.src = url;
+          designImage.onerror = function () {
+            alert("Error loading design image.");
+            designImage.src = "assets/images/left-bg.gif";
+          };
+        }
+
+        // Update counter
+        const counter = document.getElementById("designCounter");
+        if (designs.length > 1) {
+          counter.textContent = `${currentDesignIndex + 1} / ${designs.length}`;
+          counter.style.display = "block";
+        } else {
+          counter.style.display = "none";
+        }
+
+        // Update navigation buttons
+        const prevBtn = document.getElementById("prevDesignBtn");
+        const nextBtn = document.getElementById("nextDesignBtn");
+
+        if (designs.length > 1) {
+          prevBtn.style.display = "flex";
+          nextBtn.style.display = "flex";
+          prevBtn.disabled = currentDesignIndex === 0;
+          nextBtn.disabled = currentDesignIndex === designs.length - 1;
+        } else {
+          prevBtn.style.display = "none";
+          nextBtn.style.display = "none";
+        }
+
+        // Load comments for this design
+        loadCurrentComments();
+      }
+
+      // Navigate to previous design
+      function prevDesign() {
+        if (currentDesignIndex > 0) {
+          saveCurrentComments(); // Save before switching
+          document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+          currentDesignIndex--;
+          updateDesignDisplay();
+        }
+      }
+
+      // Navigate to next design
+      function nextDesign() {
+        const designs = revisionUrls[currentRevision];
+        if (currentDesignIndex < designs.length - 1) {
+          saveCurrentComments(); // Save before switching
+          document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+          currentDesignIndex++;
+          updateDesignDisplay();
+        }
+      }
+
+      // Clear comments when switching revisions
+      function clearCommentsForRevision() {
+        comments = [];
+        commentCounter = 0;
+        displayComments();
+
+        // Remove all markers
+        document
+          .querySelectorAll(".comment-marker, .comment-label")
+          .forEach((el) => el.remove());
+      }
+
+      // Handle revision tab clicks and navigation button clicks
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".revision-tab").forEach((tab) => {
+          tab.addEventListener("click", function () {
+            const revision = parseInt(this.getAttribute("data-revision"));
+            if (revisionUrls[revision] && revisionUrls[revision].length > 0) {
+              loadRevisionImage(revision);
+            }
+          });
+        });
+
+        // Navigation button handlers
+        document
+          .getElementById("prevDesignBtn")
+          .addEventListener("click", prevDesign);
+        document
+          .getElementById("nextDesignBtn")
+          .addEventListener("click", nextDesign);
+      });
+
+      // Click on design to add comment
+      imageContainer.addEventListener("click", function (e) {
+        if (e.target === designImage) {
+          const rect = imageContainer.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+          tempMarkerPosition = { x, y };
+
+          // Show preview marker immediately
+          showPreviewMarker(x, y);
+
+          // Position form near the click
+          positionCommentForm(e.clientX, e.clientY);
+
+          commentForm.style.display = "block";
+          document.getElementById("userComment").focus();
+        }
+      });
+
+      // Position comment form near the marker
+      function positionCommentForm(clickX, clickY) {
+        const formWidth = 320;
+        const formHeight = 200;
+        const padding = 20;
+
+        // Calculate position
+        let left = clickX + padding;
+        let top = clickY - formHeight / 2;
+
+        // Keep within viewport
+        const maxLeft = window.innerWidth - formWidth - padding;
+        const maxTop = window.innerHeight - formHeight - padding;
+
+        left = Math.min(Math.max(padding, left), maxLeft);
+        top = Math.min(Math.max(padding, top), maxTop);
+
+        commentForm.style.left = left + "px";
+        commentForm.style.top = top + "px";
+      }
+
+      // Cancel button handler
+      document
+        .getElementById("cancelBtn")
+        .addEventListener("click", function () {
+          commentForm.style.display = "none";
+          document.getElementById("userComment").value = "";
+          removePreviewMarker();
+          tempMarkerPosition = null;
+        });
+
+      // Show preview marker while typing
+      function showPreviewMarker(x, y) {
+        // Remove any existing preview marker
+        const existingPreview = document.getElementById("preview-marker");
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+
+        // Create preview marker
+        const marker = document.createElement("div");
+        marker.id = "preview-marker";
+        marker.className = "comment-marker";
+        marker.style.left = x + "%";
+        marker.style.top = y + "%";
+        marker.style.backgroundColor = "#f7933a";
+        marker.style.opacity = "0.7";
+        marker.innerHTML =
+          '<i class="fas fa-pen" style="font-size: 10px;"></i>';
+
+        imageContainer.appendChild(marker);
+      }
+
+      // Remove preview marker when form is hidden
+      function removePreviewMarker() {
+        const existingPreview = document.getElementById("preview-marker");
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+      }
+
+      // Add comment (not submit to Airtable yet - just collect)
+      feedbackForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const userComment = document.getElementById("userComment").value.trim();
+
+        // Validate comment text
+        if (!userComment) {
+          alert("Please enter a comment before submitting.");
+          return;
+        }
+
+        // Validate position exists
+        if (
+          !tempMarkerPosition ||
+          typeof tempMarkerPosition.x !== "number" ||
+          typeof tempMarkerPosition.y !== "number"
+        ) {
+          alert(
+            "Invalid marker position. Please try clicking on the design again."
+          );
+          return;
+        }
+
+        globalCommentCounter++;
+
+        const comment = {
+          id: globalCommentCounter,
+          author: customerName || "Customer",
+          text: userComment,
+          position: tempMarkerPosition,
+          timestamp: new Date().toLocaleString(),
+        };
+
+        // Add to local comments array
+        comments.push(comment);
+        removePreviewMarker(); // Remove preview marker
+        addMarker(comment); // Add permanent marker
+        displayComments();
+        saveCurrentComments(); // Save to store
+
+        // Reset form
+        feedbackForm.reset();
+        commentForm.style.display = "none";
+        tempMarkerPosition = null;
+
+        // Show submit all button
+        document.getElementById("submitAllBtn").style.display = "block";
+      });
+
+      function addMarker(comment) {
+        const marker = document.createElement("div");
+        marker.className = "comment-marker";
+        marker.textContent = comment.id;
+        marker.style.left = comment.position.x + "%";
+        marker.style.top = comment.position.y + "%";
+
+        marker.addEventListener("click", function (e) {
+          e.stopPropagation();
+          document
+            .getElementById(`comment-${comment.id}`)
+            .scrollIntoView({ behavior: "smooth" });
+        });
+
+        imageContainer.appendChild(marker);
+
+        // Add comment label next to marker
+        const label = document.createElement("div");
+        label.className = "comment-label";
+        label.textContent = comment.text;
+
+        // Position label to the right or left of marker depending on space
+        const markerX = comment.position.x;
+        if (markerX > 50) {
+          // Marker on right side of image, show label on left
+          label.classList.add("left");
+          label.style.right = 100 - markerX + "%";
+          label.style.left = "auto";
+          label.style.marginRight = "35px";
+        } else {
+          // Marker on left side of image, show label on right
+          label.classList.add("right");
+          label.style.left = markerX + "%";
+          label.style.marginLeft = "35px";
+        }
+        label.style.top = comment.position.y + "%";
+        label.style.transform = "translateY(-50%)";
+
+        imageContainer.appendChild(label);
+      }
+
+      /**
+       * Escapes HTML special characters to prevent XSS attacks
+       * @param {string} text - The text to escape
+       * @returns {string} - HTML-safe text
+       */
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function displayComments() {
+        if (comments.length === 0) {
+          commentList.innerHTML = `
+            <div class="no-comments">
+              <i class="fas fa-comment-dots" style="font-size: 48px; color: var(--field-place-color); margin-bottom: 15px;"></i>
+              <p>No feedback yet. Click on the design to add your first comment!</p>
+            </div>
+          `;
+          return;
+        }
+
+        commentList.innerHTML = comments
+          .map(
+            (comment) => `
+              <div class="comment-item" id="comment-${escapeHtml(String(comment.id))}">
+                <div class="comment-header">
+                  <span class="comment-author">${escapeHtml(comment.author)}</span>
+                  <span class="comment-number">${escapeHtml(String(comment.id))}</span>
+                </div>
+                <div class="comment-text">${escapeHtml(comment.text)}</div>
+                <div class="comment-time">
+                  <i class="fas fa-clock"></i> ${escapeHtml(comment.timestamp)}
+                </div>
+                <div class="comment-actions">
+                  <button class="btn-edit" onclick="editComment(${comment.id})">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="btn-delete" onclick="deleteComment(${comment.id})">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      // Edit comment
+      function editComment(commentId) {
+        const comment = comments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        // Find the marker and remove it temporarily
+        const markers = document.querySelectorAll('.comment-marker');
+        markers.forEach(marker => {
+          if (marker.textContent == commentId) {
+            marker.remove();
+          }
+        });
+
+        // Find the label and remove it
+        const labels = document.querySelectorAll('.comment-label');
+        labels.forEach(label => {
+          const markerX = comment.position.x;
+          if ((markerX > 50 && label.classList.contains('left')) ||
+              (markerX <= 50 && label.classList.contains('right'))) {
+            label.remove();
+          }
+        });
+
+        // Pre-fill the form with existing comment
+        document.getElementById("userComment").value = comment.text;
+        tempMarkerPosition = comment.position;
+
+        // Show preview marker
+        showPreviewMarker(comment.position.x, comment.position.y);
+
+        // Show the form
+        const rect = imageContainer.getBoundingClientRect();
+        const clickX = rect.left + (rect.width * comment.position.x / 100);
+        const clickY = rect.top + (rect.height * comment.position.y / 100);
+        positionCommentForm(clickX, clickY);
+        commentForm.style.display = "block";
+        document.getElementById("userComment").focus();
+
+        // Remove the comment from array (will be re-added when form is submitted)
+        comments = comments.filter(c => c.id !== commentId);
+        displayComments();
+        saveCurrentComments();
+      }
+
+      // Delete comment
+      function deleteComment(commentId) {
+        if (!confirm('Are you sure you want to delete this comment?')) return;
+
+        // Remove marker
+        const markers = document.querySelectorAll('.comment-marker');
+        markers.forEach(marker => {
+          if (marker.textContent == commentId) {
+            marker.remove();
+          }
+        });
+
+        // Remove label
+        const comment = comments.find(c => c.id === commentId);
+        if (comment) {
+          const labels = document.querySelectorAll('.comment-label');
+          labels.forEach(label => {
+            const markerX = comment.position.x;
+            if ((markerX > 50 && label.classList.contains('left')) ||
+                (markerX <= 50 && label.classList.contains('right'))) {
+              label.remove();
+            }
+          });
+        }
+
+        // Remove from array
+        comments = comments.filter(c => c.id !== commentId);
+        displayComments();
+        saveCurrentComments();
+
+        // Hide submit button if no comments anywhere
+        const hasAnyComments = Object.values(allCommentsStore).some(revisionStore =>
+          Object.values(revisionStore).some(designComments => designComments && designComments.length > 0)
+        );
+        if (!hasAnyComments) {
+          document.getElementById("submitAllBtn").style.display = "none";
+        }
+      }
+
+      // Submit all feedback to Airtable with screenshot
+      document
+        .getElementById("submitAllBtn")
+        .addEventListener("click", async function () {
+          const btn = this;
+          const originalText = btn.innerHTML;
+
+          // Save current comments before submitting
+          saveCurrentComments();
+
+          // Collect all comments from all revisions and designs
+          const allComments = [];
+          Object.keys(allCommentsStore).forEach(revisionKey => {
+            const revisionStore = allCommentsStore[revisionKey];
+            Object.keys(revisionStore).forEach(designKey => {
+              const designComments = revisionStore[designKey];
+              if (designComments && designComments.length > 0) {
+                allComments.push(...designComments);
+              }
+            });
+          });
+
+          // Validate we have comments to submit
+          if (allComments.length === 0) {
+            alert(
+              "No comments to submit. Please add at least one comment first."
+            );
+            return;
+          }
+
+          // Validate configuration is loaded
+          if (
+            !window.CONFIG.airtable.baseId ||
+            !window.CONFIG.airtable.apiKey
+          ) {
+            alert(
+              "Application configuration not loaded. Please refresh the page and try again."
+            );
+            return;
+          }
+
+          btn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Uploading screenshot and saving feedback...';
+          btn.disabled = true;
+
+          try {
+            // 1. Capture screenshot with markers
+            const canvas = await html2canvas(imageContainer, {
+              backgroundColor: null,
+              scale: 2,
+              logging: false,
+              useCORS: true,
+              allowTaint: true,
+            });
+
+            if (!canvas) {
+              throw new Error("Failed to capture design screenshot");
+            }
+
+            // 2. Convert to blob
+            const blob = await new Promise((resolve, reject) => {
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error("Failed to convert canvas to blob"));
+                }
+              }, "image/png");
+            });
+
+            // 3. Upload to Cloudinary
+            const formData = new FormData();
+            formData.append("file", blob);
+            formData.append("upload_preset", "feedback");
+            formData.append("cloud_name", "dfm3kmq1y");
+
+            const cloudinaryResponse = await fetch(
+              "https://api.cloudinary.com/v1_1/dfm3kmq1y/image/upload",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+
+            if (!cloudinaryResponse.ok) {
+              throw new Error(
+                `Cloudinary upload failed with status: ${cloudinaryResponse.status}`
+              );
+            }
+
+            const cloudinaryData = await cloudinaryResponse.json();
+
+            if (cloudinaryData.error) {
+              throw new Error(
+                `Cloudinary error: ${cloudinaryData.error.message}`
+              );
+            }
+
+            if (!cloudinaryData.secure_url) {
+              throw new Error("Cloudinary did not return an image URL");
+            }
+
+            const imageUrl = cloudinaryData.secure_url;
+
+            // 4. Find the matching Design Draft record by Order Number
+            let designDraftRecordId = null;
+            if (projectId) {
+              try {
+                // Search for Design Draft by matching Order Number lookup field
+                // The lookup field "Order Number (from Project Information)" contains the Order Number
+                const designDraftFormula = `{Order Number (from Project Information)}='${projectId}'`;
+
+                console.log(
+                  "Searching for Design Draft with formula:",
+                  designDraftFormula
+                );
+                console.log("Order Number:", projectId);
+
+                const designDraftResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts`,
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                  },
+                  data: {
+                    filterByFormula: designDraftFormula,
+                    maxRecords: 1,
+                  },
+                });
+
+                console.log(
+                  "Design Draft search response:",
+                  designDraftResponse
+                );
+
+                if (
+                  designDraftResponse.records &&
+                  designDraftResponse.records.length > 0
+                ) {
+                  designDraftRecordId = designDraftResponse.records[0].id;
+                  console.log(
+                    "Found matching Design Draft record:",
+                    designDraftRecordId
+                  );
+                } else {
+                  console.error("No Design Draft found for order:", projectId);
+                  throw new Error(
+                    `No Design Draft found for this order (${projectId}). Please ensure a Design Draft exists with the Project Information field linked to this submission.`
+                  );
+                }
+              } catch (err) {
+                console.error("Error finding Design Draft record:", err);
+                if (
+                  err.message &&
+                  err.message.includes("No Design Draft found")
+                ) {
+                  throw err;
+                }
+                throw new Error(
+                  "Could not search for Design Draft record. " +
+                    (err.responseJSON?.error?.message ||
+                      err.message ||
+                      "Please contact support.")
+                );
+              }
+            } else {
+              throw new Error("Missing order number. Cannot save feedback.");
+            }
+
+            // 5. Combine all comments into one formatted string
+            const formattedComments = allComments
+              .map(
+                (c, index) =>
+                  `${index + 1}. ${c.text}`
+              )
+              .join("\n");
+
+            // 6. Update the Design Draft record with feedback for the current revision
+            // Map tab number to actual revision: 1=Design Draft 1, 2=Rev 1, 3=Rev 2, 4=Rev 3
+            const revisionMapping = {
+              1: "Design Draft 1",
+              2: 1, // Revision 1
+              3: 2, // Revision 2
+              4: 3, // Revision 3
+            };
+
+            const actualRevision = revisionMapping[currentRevision];
+            const isDesignDraft = currentRevision === 1;
+
+            // Map all tabs to their revision numbers for field naming
+            // Each tab now has its own dedicated fields to prevent conflicts
+            const revisionForFields = {
+              1: 1,  // Initial Design → Annotated Design Rev 1
+              2: 2,  // Revision 1 → Annotated Design Rev 2
+              3: 3,  // Revision 2 → Annotated Design Rev 3
+              4: 4   // Revision 3 → Annotated Design Rev 4
+            };
+
+            const fieldRevision = revisionForFields[currentRevision];
+
+            // All tabs use the same field structure with Rev X suffix
+            const feedbackFieldName = `Feedback Rev ${fieldRevision}`;
+            const annotatedFieldName = `Annotated Design Rev ${fieldRevision}`;
+            const commentsFieldName = `Total Comments Rev ${fieldRevision}`;
+            const createdFieldName = `Feedback Created Rev ${fieldRevision}`;
+
+            // All revision fields use Date type (YYYY-MM-DD format)
+            const dateValue = new Date().toISOString().split('T')[0];
+
+            const updatePayload = {
+              fields: {
+                [feedbackFieldName]: formattedComments,
+                [annotatedFieldName]: [
+                  {
+                    url: imageUrl,
+                  },
+                ],
+                [commentsFieldName]: allComments.length,  // All are Number fields now
+                [createdFieldName]: dateValue,
+              },
+            };
+
+            const airtableResponse = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts/${designDraftRecordId}`,
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                "Content-Type": "application/json",
+              },
+              data: JSON.stringify(updatePayload),
+            });
+
+            console.log(
+              "Feedback saved to Design Draft successfully! Record ID:",
+              airtableResponse.id
+            );
+            alert(
+              `Success! ${allComments.length} comment${allComments.length > 1 ? "s" : ""} submitted.`
+            );
+
+            // Clear all comments and hide the submit button
+            allCommentsStore = {
+              1: {},
+              2: {},
+              3: {},
+              4: {},
+            };
+            comments = [];
+            globalCommentCounter = 0;
+            document.querySelectorAll(".comment-marker, .comment-label").forEach(el => el.remove());
+            displayComments();
+            btn.style.display = "none";
+          } catch (error) {
+            console.error("Error submitting feedback:", error);
+
+            let errorMessage = "Failed to submit feedback. ";
+            if (error.responseJSON && error.responseJSON.error) {
+              errorMessage +=
+                error.responseJSON.error.message ||
+                error.responseJSON.error.type;
+            } else if (error.message) {
+              errorMessage += error.message;
+            } else {
+              errorMessage += "Please try again or contact support.";
+            }
+
+            alert(errorMessage);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }
+        });
+
+      // Download project files
+      document
+        .getElementById("downloadFilesBtn")
+        .addEventListener("click", async function () {
+          const btn = this;
+          const originalText = btn.innerHTML;
+
+          if (!projectId) {
+            alert("No project information available.");
+            return;
+          }
+
+          // Validate configuration is loaded
+          if (
+            !window.CONFIG.airtable.baseId ||
+            !window.CONFIG.airtable.apiKey
+          ) {
+            alert(
+              "Application configuration not loaded. Please refresh the page and try again."
+            );
+            return;
+          }
+
+          btn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Fetching project files...';
+          btn.disabled = true;
+
+          try {
+            // Find the Submission record first to get linked Discovery Call Records
+            const submissionFormula = `{Order Number}='${projectId}'`;
+
+            const submissionResponse = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Submissions`,
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+              },
+              data: {
+                filterByFormula: submissionFormula,
+                maxRecords: 1,
+              },
+            });
+
+            if (
+              !submissionResponse.records ||
+              submissionResponse.records.length === 0
+            ) {
+              throw new Error("No submission record found for this order.");
+            }
+
+            const submissionRecord = submissionResponse.records[0];
+            const discoveryCallRecords = submissionRecord.fields["Discovery Call Records"];
+
+            if (!discoveryCallRecords || !Array.isArray(discoveryCallRecords) || discoveryCallRecords.length === 0) {
+              throw new Error("No Discovery Call Record found for this order.");
+            }
+
+            // Fetch the Discovery Call Record to get Project File Link
+            const discoveryCallId = discoveryCallRecords[0];
+
+            const discoveryCallResponse = await $.ajax({
+              url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Discovery%20Call%20Records/${discoveryCallId}`,
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+              },
+            });
+
+            if (!discoveryCallResponse.fields) {
+              throw new Error("Discovery Call Record has no data.");
+            }
+
+            // Get the Project File Link
+            const projectFileLink = discoveryCallResponse.fields["Project File Link"];
+
+            if (!projectFileLink || typeof projectFileLink !== 'string') {
+              throw new Error("No Project File Link found. Please contact support.");
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening project files...';
+
+            // Open the Project File Link in a new tab
+            window.open(projectFileLink, '_blank');
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          } catch (error) {
+            console.error("Error accessing project files:", error);
+
+            let errorMessage = "Failed to access project files. ";
+            if (error.responseJSON && error.responseJSON.error) {
+              errorMessage +=
+                error.responseJSON.error.message ||
+                error.responseJSON.error.type;
+            } else if (error.message) {
+              errorMessage += error.message;
+            } else {
+              errorMessage += "Please try again or contact support.";
+            }
+
+            alert(errorMessage);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }
+        });
+
+      // Initialize
+      // loadProjectDetails is now called after config loads (see loadConfig function)
+      displayComments();
+    </script>
+  </body>
+</html>
