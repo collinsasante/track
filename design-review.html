@@ -810,6 +810,17 @@
               data: {
                 filterByFormula: formula,
                 maxRecords: 1,
+                // Explicitly request attachment fields to ensure they're returned
+                fields: [
+                  'Name',
+                  'Order Number (from Project Information)',
+                  'Design Draft 1',
+                  'Revision 1',
+                  'Revision 2',
+                  'Revision 3',
+                  'Status',
+                  'Project Type'
+                ]
               },
             });
 
