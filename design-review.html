@@ -823,6 +823,27 @@
               console.log("Design Draft fields (from list):", record.fields);
               console.log("All field names (from list):", Object.keys(record.fields));
 
+              // Try fetching table schema to see all field definitions
+              console.log("=== FETCHING TABLE SCHEMA ===");
+              try {
+                const schemaResponse = await $.ajax({
+                  url: `https://api.airtable.com/v0/meta/bases/${window.CONFIG.airtable.baseId}/tables`,
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                  },
+                });
+                console.log("Schema response:", schemaResponse);
+                const designDraftsTable = schemaResponse.tables.find(t => t.name === 'Design Drafts');
+                if (designDraftsTable) {
+                  console.log("Design Drafts table fields:", designDraftsTable.fields.map(f => f.name));
+                  const attachmentFields = designDraftsTable.fields.filter(f => f.type === 'multipleAttachments');
+                  console.log("Attachment fields found:", attachmentFields.map(f => f.name));
+                }
+              } catch (schemaError) {
+                console.error("Error fetching schema (API key may not have schema.bases:read permission):", schemaError);
+              }
+
               // Try fetching the record directly by ID to get ALL fields including attachments
               console.log("=== FETCHING RECORD BY ID ===");
               const directResponse = await $.ajax({
