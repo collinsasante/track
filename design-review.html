@@ -819,32 +819,32 @@
               const fields = response.records[0].fields;
               console.log("Design Draft fields:", fields);
 
-              // Load all designs - each field maps to a separate tab
-              const designDraftFields = [
-                { field: "Design Draft 1", revision: 1 }, // Tab 1: Design 1
-                { field: "Revision 1", revision: 2 }, // Tab 2: Design 2
-                { field: "Revision 2", revision: 3 }, // Tab 3: Design 3
-                { field: "Revision 3", revision: 4 }, // Tab 4: Design 4
+              // Flexible field detection - try multiple possible field name patterns
+              const possibleFieldNames = [
+                // Common patterns for design draft fields
+                { patterns: ["Design Draft 1", "Files Uploaded", "Design File", "Design Draft"], revision: 1 },
+                { patterns: ["Revision 1", "Design Draft 2", "Revision"], revision: 2 },
+                { patterns: ["Revision 2", "Design Draft 3"], revision: 3 },
+                { patterns: ["Revision 3", "Design Draft 4"], revision: 4 }
               ];
 
-              designDraftFields.forEach(({ field, revision }) => {
-                console.log(`Checking field: ${field}`, fields[field]);
-                if (fields[field] && Array.isArray(fields[field])) {
-                  console.log(
-                    `${field} is an array with ${fields[field].length} items`
-                  );
-                  fields[field].forEach((attachment, idx) => {
-                    console.log(`${field}[${idx}]:`, attachment);
-                    if (attachment.url) {
-                      console.log(
-                        `Adding URL to revision ${revision}:`,
-                        attachment.url
-                      );
-                      revisionUrls[revision].push(attachment.url);
-                    }
-                  });
-                } else {
-                  console.log(`${field} is not an array or doesn't exist`);
+              possibleFieldNames.forEach(({ patterns, revision }) => {
+                // Try each pattern until we find a match
+                for (const fieldName of patterns) {
+                  if (fields[fieldName] && Array.isArray(fields[fieldName])) {
+                    console.log(`Found field: ${fieldName}`, fields[fieldName]);
+                    fields[fieldName].forEach((attachment, idx) => {
+                      console.log(`${fieldName}[${idx}]:`, attachment);
+                      if (attachment.url) {
+                        console.log(
+                          `Adding URL to revision ${revision}:`,
+                          attachment.url
+                        );
+                        revisionUrls[revision].push(attachment.url);
+                      }
+                    });
+                    break; // Found match, stop searching for this revision
+                  }
                 }
               });
 
