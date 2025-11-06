@@ -818,39 +818,39 @@
             if (response.records && response.records.length > 0) {
               const fields = response.records[0].fields;
               console.log("Design Draft fields:", fields);
+              console.log("All field names:", Object.keys(fields));
 
-              // Flexible field detection - try multiple possible field name patterns
+              // Map specific attachment fields to revision numbers
               const possibleFieldNames = [
-                // Common patterns for design draft fields
-                { patterns: ["Design Draft 1", "Files Uploaded", "Design File", "Design Draft"], revision: 1 },
-                { patterns: ["Revision 1", "Design Draft 2", "Revision"], revision: 2 },
-                { patterns: ["Revision 2", "Design Draft 3"], revision: 3 },
-                { patterns: ["Revision 3", "Design Draft 4"], revision: 4 }
+                { patterns: ["Design Draft 1"], revision: 1 },  // Initial design
+                { patterns: ["Revision 1"], revision: 2 },      // First revision
+                { patterns: ["Revision 2"], revision: 3 },      // Second revision
+                { patterns: ["Revision 3"], revision: 4 }       // Third revision
               ];
 
               possibleFieldNames.forEach(({ patterns, revision }) => {
                 // Try each pattern until we find a match
                 for (const fieldName of patterns) {
-                  if (fields[fieldName] && Array.isArray(fields[fieldName])) {
-                    console.log(`Found field: ${fieldName}`, fields[fieldName]);
-                    fields[fieldName].forEach((item, idx) => {
-                      console.log(`${fieldName}[${idx}]:`, item);
+                  console.log(`Checking for field: ${fieldName}`, fields[fieldName]);
 
-                      // Case 1: Airtable attachment object with url property
-                      if (item && typeof item === 'object' && item.url) {
-                        console.log(`Adding attachment URL to revision ${revision}:`, item.url);
-                        revisionUrls[revision].push(item.url);
-                      }
-                      // Case 2: Plain text string containing URLs (newline-separated)
-                      else if (typeof item === 'string') {
-                        const urls = item.split('\n').map(url => url.trim()).filter(url => url.length > 0);
-                        console.log(`Found ${urls.length} URLs in text field for revision ${revision}:`, urls);
-                        urls.forEach(url => {
-                          revisionUrls[revision].push(url);
-                        });
+                  if (fields[fieldName] && Array.isArray(fields[fieldName]) && fields[fieldName].length > 0) {
+                    console.log(`Found field: ${fieldName} with ${fields[fieldName].length} attachments`);
+
+                    // Process Airtable attachment objects
+                    fields[fieldName].forEach((attachment, idx) => {
+                      console.log(`${fieldName}[${idx}]:`, attachment);
+
+                      // Airtable attachment objects have url, filename, size, type properties
+                      if (attachment && typeof attachment === 'object' && attachment.url) {
+                        console.log(`Adding attachment URL to revision ${revision}:`, attachment.url);
+                        revisionUrls[revision].push(attachment.url);
+                      } else {
+                        console.log(`Item is not a valid attachment object:`, attachment);
                       }
                     });
                     break; // Found match, stop searching for this revision
+                  } else {
+                    console.log(`Field ${fieldName} is empty or doesn't exist`);
                   }
                 }
               });
