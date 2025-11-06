@@ -833,14 +833,21 @@
                 for (const fieldName of patterns) {
                   if (fields[fieldName] && Array.isArray(fields[fieldName])) {
                     console.log(`Found field: ${fieldName}`, fields[fieldName]);
-                    fields[fieldName].forEach((attachment, idx) => {
-                      console.log(`${fieldName}[${idx}]:`, attachment);
-                      if (attachment.url) {
-                        console.log(
-                          `Adding URL to revision ${revision}:`,
-                          attachment.url
-                        );
-                        revisionUrls[revision].push(attachment.url);
+                    fields[fieldName].forEach((item, idx) => {
+                      console.log(`${fieldName}[${idx}]:`, item);
+
+                      // Case 1: Airtable attachment object with url property
+                      if (item && typeof item === 'object' && item.url) {
+                        console.log(`Adding attachment URL to revision ${revision}:`, item.url);
+                        revisionUrls[revision].push(item.url);
+                      }
+                      // Case 2: Plain text string containing URLs (newline-separated)
+                      else if (typeof item === 'string') {
+                        const urls = item.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+                        console.log(`Found ${urls.length} URLs in text field for revision ${revision}:`, urls);
+                        urls.forEach(url => {
+                          revisionUrls[revision].push(url);
+                        });
                       }
                     });
                     break; // Found match, stop searching for this revision
