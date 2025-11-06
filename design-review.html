@@ -818,10 +818,25 @@
 
             if (response.records && response.records.length > 0) {
               const record = response.records[0];
-              const fields = record.fields;
-              console.log("Design Draft record ID:", record.id);
-              console.log("Design Draft fields:", fields);
-              console.log("All field names:", Object.keys(fields));
+              const recordId = record.id;
+              console.log("Design Draft record ID:", recordId);
+              console.log("Design Draft fields (from list):", record.fields);
+              console.log("All field names (from list):", Object.keys(record.fields));
+
+              // Try fetching the record directly by ID to get ALL fields including attachments
+              console.log("=== FETCHING RECORD BY ID ===");
+              const directResponse = await $.ajax({
+                url: `https://api.airtable.com/v0/${window.CONFIG.airtable.baseId}/Design%20Drafts/${recordId}`,
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${window.CONFIG.airtable.apiKey}`,
+                },
+              });
+
+              console.log("Direct fetch response:", directResponse);
+              const fields = directResponse.fields;
+              console.log("Design Draft fields (direct fetch):", fields);
+              console.log("All field names (direct fetch):", Object.keys(fields));
 
               // Debug: Check for any array fields that might be attachments
               Object.keys(fields).forEach(key => {
