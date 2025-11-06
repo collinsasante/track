@@ -903,26 +903,6 @@
 
               console.log("Final Revision URLs:", revisionUrls);
 
-              // FALLBACK: If no attachment fields found, use Files Uploaded text field
-              const allEmpty = Object.values(revisionUrls).every(arr => arr.length === 0);
-              if (allEmpty && fields['Files Uploaded'] && Array.isArray(fields['Files Uploaded'])) {
-                console.log("No attachment fields found, using Files Uploaded fallback");
-                const filesUploaded = fields['Files Uploaded'];
-
-                // Parse the text field which contains newline-separated URLs
-                filesUploaded.forEach(item => {
-                  if (typeof item === 'string') {
-                    const urls = item.split('\n').map(url => url.trim()).filter(url => url.length > 0);
-                    console.log(`Found ${urls.length} URLs in Files Uploaded field:`, urls);
-                    // Add all URLs to revision 1 (initial design)
-                    urls.forEach(url => {
-                      revisionUrls[1].push(url);
-                    });
-                  }
-                });
-                console.log("Updated Revision URLs with fallback:", revisionUrls);
-              }
-
               // Find the latest available revision (highest number with designs)
               for (let i = 4; i >= 1; i--) {
                 if (revisionUrls[i].length > 0) {
