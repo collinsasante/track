@@ -809,27 +809,26 @@
               },
               data: {
                 filterByFormula: formula,
-                maxRecords: 1,
-                // Explicitly request attachment fields to ensure they're returned
-                fields: [
-                  'Name',
-                  'Order Number (from Project Information)',
-                  'Design Draft 1',
-                  'Revision 1',
-                  'Revision 2',
-                  'Revision 3',
-                  'Status',
-                  'Project Type'
-                ]
+                maxRecords: 1
+                // Removed fields parameter to get ALL fields from Airtable
               },
             });
 
             console.log("Airtable response:", response);
 
             if (response.records && response.records.length > 0) {
-              const fields = response.records[0].fields;
+              const record = response.records[0];
+              const fields = record.fields;
+              console.log("Design Draft record ID:", record.id);
               console.log("Design Draft fields:", fields);
               console.log("All field names:", Object.keys(fields));
+
+              // Debug: Check for any array fields that might be attachments
+              Object.keys(fields).forEach(key => {
+                if (Array.isArray(fields[key])) {
+                  console.log(`Array field found: "${key}" with ${fields[key].length} items:`, fields[key]);
+                }
+              });
 
               // Map specific attachment fields to revision numbers
               const possibleFieldNames = [
